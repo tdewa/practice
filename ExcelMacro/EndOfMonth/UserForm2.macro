@@ -1,0 +1,139 @@
+Dim files() As String
+
+Private Sub ListView1_Enter()
+'
+' リストの無い状態でのボタン無効
+'
+'
+    CommandButton1.Enabled = False
+End Sub
+
+Private Sub ListView1_OLEDragDrop(Data As MSComctlLib.DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single)
+'
+' ファイルのドラッグ＆ドロップ
+'
+'
+    Dim all_file_path As String
+ 
+    If Data.files.Count > 0 Then
+        For i = 1 To Data.files.Count
+            ReDim Preserve files(i - 1) As String
+            all_file_path = all_file_path & Data.files(i) & vbNewLine
+            files(i - 1) = Data.files(i)
+        Next i
+        If MsgBox("ドラッグ＆ドロップしたファイルは次のファイルにお間違いありませんか？" & vbCrLf & vbCrLf & all_file_path & vbCrLf & vbCrLf & "もし複数ファイルがある場合は同時にドラッグ＆ドロップしてください", vbOKCancel, "ドラッグ＆ドロップファイル確認") = vbOK Then
+            CommandButton1.Enabled = True
+        End If
+    End If
+End Sub
+
+Private Sub CommandButton1_Click()
+'
+' 添付完了後のファイル追加
+'
+'
+    Dim wb As Workbook
+    Dim hit_flag As Boolean
+    hit_flag = False
+    For i = 1 To Workbooks.Count
+        Set wb = Workbooks(i)
+        If InStr(wb.Name, "交通費") <> 0 Then
+            hit_flag = True
+            Exit For
+        End If
+    Next
+    If hit_flag = False Then
+        MsgBox ("予期せぬエラーが発生しました。" & vbCrLf & "交通費清算書の「報告書の発行」ボタンのクリックからやり直してください。")
+        Erase files
+        UserForm2.Hide
+        Exit Sub
+    End If
+    
+    Dim last_row As Integer
+    For i = 0 To 100
+        If wb.sheets(1).Range("B" & 23 + i).Value = "" And wb.sheets(1).Range("B" & 23 + i - 1).Value = "" Then
+            last_row = 23 + i
+            Exit For
+        End If
+    Next
+    
+    wb.sheets(1).Range("B" & last_row).Select
+    Dim shape As shape
+    Dim first_left As Double, next_left As Double
+    Dim first_top As Double, next_top As Double
+    Dim max_height As Double
+    ' 初期画像位置
+    first_left = Selection.Left
+    next_left = Selection.Left
+    first_top = Selection.top
+    next_top = Selection.top
+    max_height = 0
+    For i = LBound(files) To UBound(files)
+        Set shape = wb.sheets(1).shapes.AddPicture( _
+            Filename:=files(i), _
+            LinkToFile:=False, _
+            SaveWithDocument:=True, _
+            Left:=next_left, top:=next_top, _
+            Width:=0, Height:=0)
+        shape.ScaleWidth 1, msoTrue
+        shape.ScaleHeight 1, msoTrue
+        If shape.Width > 185 Then
+            shape.Width = 190
+        End If
+        If shape.Height > 185 Then
+            shape.Height = 190
+        End If
+        If max_height < shape.Height Then
+            max_height = shape.Height
+        End If
+
+        ' 次の画像位置
+        If next_top = first_top And next_left <> first_left Then
+            next_left = first_left
+            next_top = next_top + max_height
+            max_height = 0
+        ElseIf next_top <> first_top And next_left > first_left + 195 Then
+            next_left = first_left
+            next_top = next_top + max_height
+            max_height = 0
+        Else
+            next_left = shape.Left + shape.Width
+        End If
+    Next
+    
+    CommandButton1.Enabled = False
+    UserForm2.Hide
+    Erase files
+
+    wb.sheets(1).Range("A1").Select
+    
+    Dim split_name() As String
+    Dim user_name As String
+    split_name = Split(wb.sheets(1).Range("D4").Value, "　")
+    If UBound(split_name) < 1 Then
+        split_name = Split(wb.sheets(1).Range("D4").Value, " ")
+        If UBound(split_name) = 1 Then
+            user_name = split_name(0) & split_name(1)
+        Else
+            user_name = split_name(0)
+        End If
+    Else
+        user_name = split_name(0) & split_name(1)
+    End If
+
+    ' 上書き保存
+    Application.DisplayAlerts = False
+
+    wb.Save
+    MsgBox ( _
+        "ファイルの貼り付け完了しました。また" & vbCrLf & _
+        wb.Path & "\" & wb.Name & vbCrLf & _
+        "上記にファイルを保存しました。" & vbCrLf & _
+        vbCrLf & _
+        "ファイルが問題なく貼り付けられているか確認の上、" & vbCrLf & _
+        "「" & Left(wb.Name, 6) & "作業報告書(" & user_name & ").xlsx」と合わせて「" & Left(wb.Name, 6) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
+        "zip圧縮ファイル名「" & Left(wb.Name, 6) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
+        "フォルダを圧縮して提出お願い致します。" _
+    )
+    Application.DisplayAlerts = True
+End Sub

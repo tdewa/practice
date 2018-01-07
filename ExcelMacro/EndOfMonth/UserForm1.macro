@@ -1,0 +1,9 @@
+Private Sub CommandButton1_Click()
+'
+' 写真を添付するボタン押下の
+' ファイルリストを添付するフォームへ切替
+'
+'
+    UserForm2.Show
+    UserForm1.Hide
+End Sub
