@@ -1,0 +1,22 @@
+﻿現場について
+
+・使っているツール
+SVN
+Notepad ++
+サーバ監視　kibana
+
+・言語
+PHP-fpm　FPM ( FastCGI Process Manager )
+https://qiita.com/kotarella1110/items/634f6fafeb33ae0f51dc
+⇒PHP実行環境について
+Webサーバ上でユーザプログラムを動作させるためのインタフェース仕様
+
+
+
+riot-js
+https://qiita.com/m_mizutani/items/887817fd7390b04423ac
+⇒分かり易い
+そこまで大変な感じはしないかも
+
+RFC821
+⇒メールの形式
