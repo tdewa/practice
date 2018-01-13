@@ -20,21 +20,22 @@ Sub ChangeSheet()
     sheet.Activate
     sheet.Range("D2").Value = ""
     sheet.Range("I3").Value = "=SUM($D$6+$D$10+$J$27)"
-    sheet.Range("I3").NumberFormatLocal = "\#,##0_);(\#,##0)"
+    sheet.Range("I3").NumberFormatLocal = "¥#,##0;¥-#,##0"
     sheet.Range("D6").Value = 0
-    sheet.Range("D6").NumberFormatLocal = "\#,##0_);(\#,##0)"
+    sheet.Range("D6").NumberFormatLocal = "¥#,##0;¥-#,##0"
     sheet.Range("F6").Value = ""
     sheet.Range("F7").Value = "平成　年　月　日〜平成　年　月　日"
     sheet.Range("D8").Value = ""
     sheet.Range("D10").Value = 0
-    sheet.Range("D10").NumberFormatLocal = "\#,##0_);(\#,##0)"
+    sheet.Range("D10").NumberFormatLocal = "¥#,##0;¥-#,##0"
     sheet.Range("F10").Value = ""
     sheet.Range("F11").Value = "平成　年　月　日〜平成　年　月　日"
     sheet.Range("D12").Value = ""
     sheet.Range("H12").Value = ""
     sheet.Range("H14").Value = ""
-    
+
     sheet.Range("B18").Select
+    Dim i As Integer
     For i = 0 To 100
         If i < 5 Then
             sheet.Range("B" & 18 + i).Value = ""
@@ -45,7 +46,7 @@ Sub ChangeSheet()
             sheet.Range("F" & 18 + i).Value = ""
             sheet.Range("G" & 18 + i).Value = ""
             sheet.Range("H" & 18 + i).Value = ""
-            sheet.Range("H" & 18 + i).NumberFormatLocal = "\#,##0_);(\#,##0)"
+            sheet.Range("H" & 18 + i).NumberFormatLocal = "¥#,##0;¥-#,##0"
             sheet.Range("I" & 18 + i).Value = "=IF($F$" & (18 + i) & "=""往復"",$H$" & (18 + i) & "*2,$H$" & (18 + i) & ")"
             sheet.Range("J" & 18 + i).Value = ""
         ElseIf sheet.Range("B" & 18 + i + 2).Value <> "注意点" Then
@@ -56,7 +57,7 @@ Sub ChangeSheet()
             Exit For
         End If
     Next
-    
+
     sheet.Range("D2").Select
     Call GetRange
 End Sub
@@ -70,15 +71,15 @@ Function GetRange() As Variant
     Dim resetdate As String
     rangetime = Split(ActiveWorkbook.ActiveSheet.Range("D2").Value, "〜")
     If UBound(rangetime) > 0 Then
-        If IsDate(rangetime(0)) = True And IsDate(rangetime(1)) = True Then
+        If VBA.IsDate(rangetime(0)) = True And VBA.IsDate(rangetime(1)) = True Then
             GetRange = rangetime
-        ElseIf IsDate(rangetime(0)) = False And IsDate(rangetime(1)) = False Then
-            If Day(Date) < 5 Then
-                resetdate = DateSerial(Year(Date), Month(Date), 0)
-                ActiveWorkbook.ActiveSheet.Range("D2").Value = Format(resetdate, "gggee年mm月01日") & "　〜　" & Format(resetdate, "gggee年mm月dd日")
+        ElseIf VBA.IsDate(rangetime(0)) = False And VBA.IsDate(rangetime(1)) = False Then
+            If VBA.Day(VBA.Date) < 5 Then
+                resetdate = VBA.DateSerial(VBA.Year(VBA.Date), VBA.Month(VBA.Date), 0)
+                ActiveWorkbook.ActiveSheet.Range("D2").Value = VBA.Format(resetdate, "gggee年mm月01日") & "　〜　" & VBA.Format(resetdate, "gggee年mm月dd日")
             Else
-                resetdate = DateSerial(Year(Date), Month(Date) + 1, 0)
-                ActiveWorkbook.ActiveSheet.Range("D2").Value = Format(resetdate, "gggee年mm月01日") & "〜" & Format(resetdate, "gggee年mm月dd日")
+                resetdate = VBA.DateSerial(VBA.Year(VBA.Date), VBA.Month(VBA.Date) + 1, 0)
+                ActiveWorkbook.ActiveSheet.Range("D2").Value = VBA.Format(resetdate, "gggee年mm月01日") & "〜" & VBA.Format(resetdate, "gggee年mm月dd日")
             End If
             MsgBox ("期間入力の修正を行いました。" & vbCrLf & "期間に間違いがないか再度確認して下さい")
             ReDim rangetime(1)
@@ -86,12 +87,12 @@ Function GetRange() As Variant
             ReDim rangetime(1)
         End If
     Else
-        If Day(Date) < 5 Then
-            resetdate = DateSerial(Year(Date), Month(Date), 0)
-            ActiveWorkbook.ActiveSheet.Range("D2").Value = Format(resetdate, "gggee年mm月01日") & "〜" & Format(resetdate, "gggee年mm月dd日")
+        If VBA.Day(VBA.Date) < 5 Then
+            resetdate = VBA.DateSerial(VBA.Year(VBA.Date), VBA.Month(VBA.Date), 0)
+            ActiveWorkbook.ActiveSheet.Range("D2").Value = VBA.Format(resetdate, "gggee年mm月01日") & "〜" & VBA.Format(resetdate, "gggee年mm月dd日")
         Else
-            resetdate = DateSerial(Year(Date), Month(Date) + 1, 0)
-            ActiveWorkbook.ActiveSheet.Range("D2").Value = Format(resetdate, "gggee年mm月01日") & "〜" & Format(resetdate, "gggee年mm月dd日")
+            resetdate = VBA.DateSerial(VBA.Year(VBA.Date), VBA.Month(VBA.Date) + 1, 0)
+            ActiveWorkbook.ActiveSheet.Range("D2").Value = VBA.Format(resetdate, "gggee年mm月01日") & "〜" & VBA.Format(resetdate, "gggee年mm月dd日")
         End If
         MsgBox ("期間入力の修正を行いました。" & vbCrLf & "期間に間違いがないか再度確認して下さい")
         ReDim rangetime(1)
@@ -107,6 +108,7 @@ Sub Worksheet_Change(ByVal Target As Range)
     If Intersect(Target, Range("B:B")) Is Nothing Then
         Exit Sub
     Else
+    Dim i As Integer
         For i = 0 To 100
             If ActiveSheet.Range("B" & 18 + i).Value = "" Then
                 If ActiveSheet.Range("B" & 18 + i + 2).Value <> "注意点" Then
@@ -146,8 +148,9 @@ Sub Publishment()
 
     Sheet1.Activate
     Dim last_row As Integer
+    Dim i As Integer
     For i = 18 To 100 Step 1
-        If InStr(Sheet1.Range("I" & i).Value, "合計") <> 0 Then
+        If VBA.InStr(Sheet1.Range("I" & i).Value, "合計") <> 0 Then
             Sheet1.Range("I" & i).Select
             last_row = i
             Exit For
@@ -160,15 +163,15 @@ Sub Publishment()
     Sheet2.Range("A1").PasteSpecial Paste:=xlPasteColumnWidths
     Sheet2.Range("A1").Select
     Sheet2.Name = "交通費精算書"
-    
+
     Dim rangetime() As String
     rangetime = GetRange
-    
+
     Dim split_name() As String
     Dim user_name As String
-    split_name = Split(Sheet1.Range("D4").Value, "　")
+    split_name = VBA.Split(Sheet1.Range("D4").Value, "　")
     If UBound(split_name) < 1 Then
-        split_name = Split(Sheet1.Range("D4").Value, " ")
+        split_name = VBA.Split(Sheet1.Range("D4").Value, " ")
         If UBound(split_name) = 1 Then
             user_name = split_name(0) & split_name(1)
         Else
@@ -202,20 +205,20 @@ Sub Publishment()
         End If
     Next
     Sheet2.Range("A1").Select
-    
-    Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & Year(rangetime(0)) & Month(rangetime(0)) & "交通費精算書(" & user_name & ").xlsx"
+
+    Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "交通費精算書(" & user_name & ").xlsx"
     If claim_flag = False Then
         MsgBox ( _
-            ThisWorkbook.Path & "\" & Year(rangetime(0)) & Month(rangetime(0)) & "交通費精算書(" & user_name & ").xls" & vbCrLf & _
+            ThisWorkbook.Path & "\" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "交通費精算書(" & user_name & ").xls" & vbCrLf & _
             "上記にファイルを保存しました。" & vbCrLf & _
-            "「" & Year(rangetime(0)) & Month(rangetime(0)) & "作業報告書(" & user_name & ").xlsx」と合わせて「" & Year(rangetime(0)) & Month(rangetime(0)) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
-            "zip圧縮ファイル名「" & Year(rangetime(0)) & Month(rangetime(0)) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
+            "「" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "作業報告書(" & user_name & ").xlsx」と合わせて「" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
+            "zip圧縮ファイル名「" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
             "フォルダを圧縮して提出お願い致します。" _
         )
     Else
         UserForm1.Show
     End If
-    
+
     Application.DisplayAlerts = True
 End Sub
 
@@ -245,6 +248,7 @@ Function ValidationCheck() As Boolean
 
     Dim rangetime() As String
     rangetime = GetRange
+    Dim i As Integer
     For i = 0 To 1
         If ActiveSheet.Range("D" & 6 + i * 4).Value > 0 Then
             If ActiveSheet.Range("F" & 6 + i * 4).Value = "" Then
@@ -263,12 +267,12 @@ Function ValidationCheck() As Boolean
             Dim seasontime() As String
             seasontime = Split(ActiveWorkbook.ActiveSheet.Range("F" & 7 + i * 4).Value, "〜")
             If UBound(seasontime) > 0 Then
-                If IsDate(seasontime(0)) = True Then
-                    If DateDiff("d", CDate(rangetime(0)), CDate(seasontime(0))) < 0 Or _
-                            DateDiff("y", CDate(rangetime(0)), CDate(seasontime(0))) < 0 Or _
+                If VBA.IsDate(seasontime(0)) = True Then
+                    If VBA.DateDiff("d", VBA.CDate(rangetime(0)), VBA.CDate(seasontime(0))) < 0 Or _
+                            VBA.DateDiff("y", VBA.CDate(rangetime(0)), VBA.CDate(seasontime(0))) < 0 Or _
                             ( _
-                                DateDiff("y", CDate(rangetime(0)), CDate(seasontime(0))) = 0 And _
-                                DateDiff("m", CDate(rangetime(0)), CDate(seasontime(0))) < 0 _
+                                VBA.DateDiff("y", VBA.CDate(rangetime(0)), VBA.CDate(seasontime(0))) = 0 And _
+                                VBA.DateDiff("m", VBA.CDate(rangetime(0)), VBA.CDate(seasontime(0))) < 0 _
                             ) Then
                         MsgBox ("期間外の定期申請があります")
                         ValidationCheck = False
@@ -293,7 +297,7 @@ Function ValidationCheck() As Boolean
                 ActiveSheet.Range("D" & 8 + i * 4).Select
                 Exit Function
             End If
-            If ActiveSheet.Range("D" & 8 + i * 4).Value = "" Or InStr(ActiveSheet.Range("D" & 8 + i * 4).Value, "〜") = 0 Then
+            If ActiveSheet.Range("D" & 8 + i * 4).Value = "" Or VBA.InStr(ActiveSheet.Range("D" & 8 + i * 4).Value, "〜") = 0 Then
                 MsgBox ("経路が未記入" & vbCrLf & "或いは、どこからどこまでの区間を利用したのか「〜」を用いて記載して下さい")
                 ValidationCheck = False
                 ActiveSheet.Range("D" & 8 + i * 4).Value
@@ -322,9 +326,9 @@ Function ValidationCheck() As Boolean
     commuter_flag = False
     commuter_memo_flag = False
     For i = 0 To 100
-        If ActiveCell.Offset(i, 0).Value <> "" And IsDate(ActiveCell.Offset(i, 0).Value) = True Then
-            If DateDiff("d", CDate(rangetime(0)), ActiveCell.Offset(i, 0).Value) < 0 Or _
-                    DateDiff("d", CDate(rangetime(1)), ActiveCell.Offset(i, 0).Value) > 0 Then
+        If ActiveCell.Offset(i, 0).Value <> "" And VBA.IsDate(ActiveCell.Offset(i, 0).Value) = True Then
+            If VBA.DateDiff("d", VBA.CDate(rangetime(0)), ActiveCell.Offset(i, 0).Value) < 0 Or _
+                    VBA.DateDiff("d", VBA.CDate(rangetime(1)), ActiveCell.Offset(i, 0).Value) > 0 Then
                 MsgBox ("期間外の申請があります")
                 ValidationCheck = False
                 ActiveCell.Offset(i, 0).Select
@@ -342,7 +346,7 @@ Function ValidationCheck() As Boolean
                 ActiveCell.Offset(i, 2).Select
                 Exit Function
             End If
-            If ActiveCell.Offset(i, 3).Value = "" Or InStr(ActiveCell.Offset(i, 3).Value, "〜") = 0 Then
+            If ActiveCell.Offset(i, 3).Value = "" Or VBA.InStr(ActiveCell.Offset(i, 3).Value, "〜") = 0 Then
                 MsgBox ("経路が未記入" & vbCrLf & "或いは、どこからどこまでの区間を利用したのか「〜」を用いて記載して下さい")
                 ValidationCheck = False
                 ActiveCell.Offset(i, 3).Select

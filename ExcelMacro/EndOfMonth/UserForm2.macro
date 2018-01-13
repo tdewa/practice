@@ -14,7 +14,7 @@ Private Sub ListView1_OLEDragDrop(Data As MSComctlLib.DataObject, Effect As Long
 '
 '
     Dim all_file_path As String
- 
+
     If Data.files.Count > 0 Then
         For i = 1 To Data.files.Count
             ReDim Preserve files(i - 1) As String
@@ -35,9 +35,10 @@ Private Sub CommandButton1_Click()
     Dim wb As Workbook
     Dim hit_flag As Boolean
     hit_flag = False
+    Dim i As Integer
     For i = 1 To Workbooks.Count
         Set wb = Workbooks(i)
-        If InStr(wb.Name, "交通費") <> 0 Then
+        If VBA.InStr(wb.Name, "交通費") <> 0 Then
             hit_flag = True
             Exit For
         End If
@@ -48,7 +49,7 @@ Private Sub CommandButton1_Click()
         UserForm2.Hide
         Exit Sub
     End If
-    
+
     Dim last_row As Integer
     For i = 0 To 100
         If wb.sheets(1).Range("B" & 23 + i).Value = "" And wb.sheets(1).Range("B" & 23 + i - 1).Value = "" Then
@@ -56,7 +57,7 @@ Private Sub CommandButton1_Click()
             Exit For
         End If
     Next
-    
+
     wb.sheets(1).Range("B" & last_row).Select
     Dim shape As shape
     Dim first_left As Double, next_left As Double
@@ -100,16 +101,16 @@ Private Sub CommandButton1_Click()
             next_left = shape.Left + shape.Width
         End If
     Next
-    
+
     CommandButton1.Enabled = False
     UserForm2.Hide
     Erase files
 
     wb.sheets(1).Range("A1").Select
-    
+
     Dim split_name() As String
     Dim user_name As String
-    split_name = Split(wb.sheets(1).Range("D4").Value, "　")
+    split_name = VBA.Split(wb.sheets(1).Range("D4").Value, "　")
     If UBound(split_name) < 1 Then
         split_name = Split(wb.sheets(1).Range("D4").Value, " ")
         If UBound(split_name) = 1 Then
@@ -131,8 +132,8 @@ Private Sub CommandButton1_Click()
         "上記にファイルを保存しました。" & vbCrLf & _
         vbCrLf & _
         "ファイルが問題なく貼り付けられているか確認の上、" & vbCrLf & _
-        "「" & Left(wb.Name, 6) & "作業報告書(" & user_name & ").xlsx」と合わせて「" & Left(wb.Name, 6) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
-        "zip圧縮ファイル名「" & Left(wb.Name, 6) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
+        "「" & VBA.Left(wb.Name, 6) & "作業報告書(" & user_name & ").xlsx」と合わせて「" & VBA.Left(wb.Name, 6) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
+        "zip圧縮ファイル名「" & VBA.Left(wb.Name, 6) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
         "フォルダを圧縮して提出お願い致します。" _
     )
     Application.DisplayAlerts = True

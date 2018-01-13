@@ -12,14 +12,14 @@ Sub Worksheet_Activate()
     Dim now_string As String
     Set sheet = ThisWorkbook.Worksheets("祝日")
     ' 現在の月を設定
-    now_string = Year(Now())
+    now_string = VBA.Year(VBA.Now())
 
     sheet.Range("$A$2:$B$199").AutoFilter Field:=1, Criteria1:=">=" & now_string & "/1/1", Operator:=xlAnd, _
         Criteria2:="<=" & now_string & "/12/31"
 
     Set sheet = ThisWorkbook.Worksheets("作業報告書テンプレート")
     sheet.Activate
-    sheet.Range("B3").Value = Format(Date, "yyyy/mm/01")
+    sheet.Range("B3").Value = VBA.Format(VBA.Date, "yyyy/mm/01")
     sheet.Range("B3").NumberFormatLocal = "yyyy年mm月"
     Call ChangeSheet
 End Sub
@@ -31,8 +31,9 @@ Sub ChangeSheet()
 '
     ' 提示設定のクリア
     Dim next_row As Integer
+    Dim i As Integer
     For i = 1 To 100
-        If InStr(ActiveSheet.Range("B" & i).Value, "勤務") <> 0 And InStr(ActiveSheet.Range("B" & i).Value, "情報") = 0 Then
+        If VBA.InStr(ActiveSheet.Range("B" & i).Value, "勤務") <> 0 And VBA.InStr(ActiveSheet.Range("B" & i).Value, "情報") = 0 Then
             ActiveSheet.Range("D" & i).Select
             ActiveSheet.Range("D" & i).ClearContents
             ActiveSheet.Range("F" & i).Select
@@ -44,7 +45,7 @@ Sub ChangeSheet()
             ActiveSheet.Range("H" & i).Select
             ActiveSheet.Range("H" & i).ClearContents
             ActiveCell.NumberFormatLocal = "h:mm"
-        ElseIf InStr(ActiveSheet.Range("B" & i).Value, "勤務") <> 0 And InStr(ActiveSheet.Range("B" & i).Value, "情報") <> 0 Then
+        ElseIf VBA.InStr(ActiveSheet.Range("B" & i).Value, "勤務") <> 0 And VBA.InStr(ActiveSheet.Range("B" & i).Value, "情報") <> 0 Then
             next_row = i
             Exit For
         End If
@@ -63,7 +64,7 @@ Sub ChangeSheet()
     end_cell = ""
     For i = 0 To 100
         If sheet.Range("A2").Offset(i, 0).Value <> "" Then
-            If Year(sheet.Range("A2").Offset(i, 0).Value) = Year(ActiveCell.Value) And Month(sheet.Range("A2").Offset(i, 0).Value) = Month(ActiveCell.Value) Then
+            If VBA.Year(sheet.Range("A2").Offset(i, 0).Value) = VBA.Year(ActiveCell.Value) And VBA.Month(sheet.Range("A2").Offset(i, 0).Value) = VBA.Month(ActiveCell.Value) Then
                 If start_cell <> "" Then
                     end_cell = sheet.Range("A2").Offset(i, 0).Address
                 Else
@@ -78,16 +79,17 @@ Sub ChangeSheet()
     Next
 
     ' 31日分フォーマット
+    Dim j As Integer
     For i = 0 To 30
         ActiveCell.Offset(0, 1).Value = ActiveCell.Value
         ActiveCell.Offset(0, 1).NumberFormatLocal = "aaa"
         ActiveCell.Offset(0, 6).Value = "=IF(OR(" & ActiveCell.Offset(0, 3).Address & "="""", " & ActiveCell.Offset(0, 4).Address & "=""""," & ActiveCell.Offset(0, 5).Address & "=""""),"""",IF(" & ActiveCell.Offset(0, 3).Address & ">" & ActiveCell.Offset(0, 4).Address & ",1-" & ActiveCell.Offset(0, 3).Address & "+" & ActiveCell.Offset(0, 4).Address & "-" & ActiveCell.Offset(0, 5).Address & "," & ActiveCell.Offset(0, 4).Address & "-" & ActiveCell.Offset(0, 3).Address & "-" & ActiveCell.Offset(0, 5).Address & "))"
         ActiveCell.Offset(0, 6).NumberFormatLocal = "h:mm"
-        If Weekday(ActiveCell.Offset(0, 1).Value) <> 7 And Weekday(ActiveCell.Offset(0, 1).Value) <> 1 Then
-            ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).Interior.Color = RGB(255, 255, 255)
+        If VBA.Weekday(ActiveCell.Offset(0, 1).Value) <> 7 And Weekday(ActiveCell.Offset(0, 1).Value) <> 1 Then
+            ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).Interior.Color = VBA.RGB(255, 255, 255)
         Else
             ActiveCell.Offset(0, 2).Value = "祝祭日"
-            ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).Interior.Color = RGB(153, 204, 255)
+            ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).Interior.Color = VBA.RGB(153, 204, 255)
         End If
         If start_cell <> "" Then
             For j = 0 To 50
@@ -95,7 +97,7 @@ Sub ChangeSheet()
                     With ActiveCell
                         .Offset(0, 2).Value = "祝祭日"
                         .Offset(0, 7).Value = sheet.Range(start_cell).Offset(j, 1).Value
-                        ActiveSheet.Range(.Address & ":" & .Offset(0, 7).Address).Interior.Color = RGB(255, 128, 128)
+                        ActiveSheet.Range(.Address & ":" & .Offset(0, 7).Address).Interior.Color = VBA.RGB(255, 128, 128)
                     End With
                 End If
                 If sheet.Range(start_cell).Offset(j, 0).Address = sheet.Range(end_cell).Address Then
@@ -108,11 +110,11 @@ Sub ChangeSheet()
             ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).ClearContents
             ActiveCell.Value = ActiveSheet.Range(ActiveCell.Offset(-1, 0).Address).Value + 1
             ActiveCell.NumberFormatLocal = "m/d"
-            If Format(ActiveCell.Value, "m") <> Format(ActiveSheet.Range(ActiveCell.Offset(-1, 0).Address).Value, "m") Then
+            If VBA.Format(ActiveCell.Value, "m") <> VBA.Format(ActiveSheet.Range(ActiveCell.Offset(-1, 0).Address).Value, "m") Then
                 For j = i To 30
                     If ActiveCell.Value <> "出勤日数" Then
                         ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).ClearContents
-                        ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).Interior.Color = RGB(255, 255, 255)
+                        ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).Interior.Color = VBA.RGB(255, 255, 255)
                     Else
                         Exit For
                     End If
@@ -142,13 +144,15 @@ Sub RegistData()
 '
 '
     Dim next_row As Integer
+    Dim i As Integer
     For i = 1 To 100
-        If InStr(ActiveSheet.Range("B" & i).Value, "勤務情報") <> 0 Then
+        If VBA.InStr(ActiveSheet.Range("B" & i).Value, "勤務情報") <> 0 Then
             next_row = i
             Exit For
         End If
     Next
 
+    Dim commuter_status As String
     Dim start_time As String, end_time As String, rest_time As String
     Dim answer As Integer
     commuter_status = ActiveSheet.Range("K18").Value
@@ -170,7 +174,7 @@ Sub RegistData()
     end_cell = ""
     For i = 0 To 1000
         If sheet.Range("A2").Offset(i, 0).Value <> "" Then
-            If Year(sheet.Range("A2").Offset(i, 0).Value) = Year(sheet.Range("A2").Offset(i, 0).Value) And Month(sheet.Range("A2").Offset(i, 0).Value) = Month(sheet.Range("A2").Offset(i, 0).Value) Then
+            If VBA.Year(sheet.Range("A2").Offset(i, 0).Value) = VBA.Year(sheet.Range("A2").Offset(i, 0).Value) And VBA.Month(sheet.Range("A2").Offset(i, 0).Value) = VBA.Month(sheet.Range("A2").Offset(i, 0).Value) Then
                 If start_cell <> "" Then
                     end_cell = sheet.Range("B2").Offset(i, 0).Address
                 Else
@@ -187,7 +191,7 @@ Sub RegistData()
     ActiveSheet.Range("B5").Offset(2, 0).Select
 
     For i = 1 To 20
-        If InStr(ActiveSheet.Range("B" & i).Value, "勤務１") <> 0 Then
+        If VBA.InStr(ActiveSheet.Range("B" & i).Value, "勤務１") <> 0 Then
             ActiveSheet.Range("D" & i).Value = commuter_status
             ActiveSheet.Range("F" & i).Value = start_time
             ActiveSheet.Range("F" & i).NumberFormatLocal = "h:mm"
@@ -202,9 +206,10 @@ Sub RegistData()
     ActiveSheet.Range("B" & next_row).Offset(2, 0).Select
 
     Dim hit_flag As Boolean
+    Dim j As Integer
     For i = 0 To 30
         hit_flag = False
-        If Weekday(ActiveCell.Offset(0, 1).Value) = 7 Or Weekday(ActiveCell.Offset(0, 1).Value) = 1 Then
+        If VBA.Weekday(ActiveCell.Offset(0, 1).Value) = 7 Or VBA.Weekday(ActiveCell.Offset(0, 1).Value) = 1 Then
             hit_flag = True
         ElseIf ActiveCell.Offset(0, 3).Value <> "" Or ActiveCell.Offset(0, 4).Value <> "" Or _
                 ActiveCell.Offset(0, 5).Value <> "" Or ActiveCell.Offset(0, 7).Value <> "" Then
@@ -260,8 +265,9 @@ Sub Publishment()
 
     Sheet1.Activate
     Dim last_row As Integer
+    Dim i As Integer
     For i = 1 To 200
-        If InStr(Sheet1.Range("B" & i).Value, "出勤日数") <> 0 Then
+        If VBA.InStr(Sheet1.Range("B" & i).Value, "出勤日数") <> 0 Then
             Sheet1.Range("B" & i).Select
             last_row = i
             Exit For
@@ -280,9 +286,9 @@ Sub Publishment()
     Sheet2.Name = "作業報告書"
     Dim split_name() As String
     Dim user_name As String
-    split_name = Split(Sheet1.Range("I3").Value, "　")
+    split_name = VBA.Split(Sheet1.Range("I3").Value, "　")
     If UBound(split_name) < 1 Then
-        split_name = Split(Sheet1.Range("I3").Value, " ")
+        split_name = VBA.Split(Sheet1.Range("I3").Value, " ")
         If UBound(split_name) = 1 Then
             user_name = split_name(0) & split_name(1)
         Else
@@ -291,19 +297,19 @@ Sub Publishment()
     Else
         user_name = split_name(0) & split_name(1)
     End If
-    Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & Year(Sheet2.Range("B3").Value) & Month(Sheet2.Range("B3").Value) & "作業報告書.xlsx"
+    Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "作業報告書.xlsx"
     MsgBox ( _
         ThisWorkbook.Path & "\" & Sheet2.Name & "(" & user_name & ").xlsx" & vbCrLf & _
         "上記にファイルを保存しました。" & vbCrLf & _
-        "「" & Year(Sheet2.Range("B3").Value) & Month(Sheet2.Range("B3").Value) & "交通費精算書(" & user_name & ").xlsx」と合わせて「" & Year(Sheet2.Range("B3").Value) & Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
-        "zip圧縮ファイル名「" & Year(Sheet2.Range("B3").Value) & Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
+        "「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "交通費精算書(" & user_name & ").xlsx」と合わせて「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
+        "zip圧縮ファイル名「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
         "フォルダを圧縮して提出お願い致します。" & vbCrLf & _
         vbCrLf & _
         "もし、現場作業報告書の提出が必要な場合は" & vbCrLf & _
-        "「" & Year(Sheet2.Range("B3").Value) & Month(Sheet2.Range("B3").Value) & "作業報告書(" & user_name & ").xlsx」" & "を手動にて編集し" & vbCrLf & _
-        "別名保存にて「" & Year(Sheet2.Range("B3").Value) & Month(Sheet2.Range("B3").Value) & "現場作業報告書(" & user_name & ").xlsx」と保存の上" & vbCrLf & _
-        "同じく「" & Year(Sheet2.Range("B3").Value) & Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
-        "zip圧縮ファイル名「" & Year(Sheet2.Range("B3").Value) & Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
+        "「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "作業報告書(" & user_name & ").xlsx」" & "を手動にて編集し" & vbCrLf & _
+        "別名保存にて「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "現場作業報告書(" & user_name & ").xlsx」と保存の上" & vbCrLf & _
+        "同じく「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
+        "zip圧縮ファイル名「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
         "フォルダを圧縮して提出お願い致します。" _
     )
 
@@ -316,8 +322,9 @@ Function ValidationCheck() As Boolean
 '
 '
     Dim next_row As Integer
+    Dim i As Integer
     For i = 1 To 100
-        If InStr(ActiveSheet.Range("B" & i).Value, "勤務情報") <> 0 Then
+        If VBA.InStr(ActiveSheet.Range("B" & i).Value, "勤務情報") <> 0 Then
             next_row = i
             Exit For
         End If
@@ -330,12 +337,12 @@ Function ValidationCheck() As Boolean
         Exit Function
     End If
 
-    If Day(Date) < 15 And Month(ActiveSheet.Range("B3").Value) <> Month(Now()) - 1 Then
+    If VBA.Day(VBA.Date) < 15 And VBA.Month(ActiveSheet.Range("B3").Value) <> VBA.Month(Now()) - 1 Then
         If MsgBox("報告する月に間違いありませんか？", vbYesNo, "確認") = False Then
             ValidationCheck = False
             Exit Function
         End If
-    ElseIf Month(ActiveSheet.Range("B3").Value) <> Month(Now()) Then
+    ElseIf VBA.Month(ActiveSheet.Range("B3").Value) <> VBA.Month(Now()) Then
         If MsgBox("報告する月に間違いありませんか？", vbYesNo, "確認") = False Then
             ValidationCheck = False
             Exit Function
@@ -389,7 +396,7 @@ Function ValidationCheck() As Boolean
                 Exit Function
             End If
         End If
-        If InStr(ActiveCell.Offset(0, 2).Value, "遅刻") <> 0 Then
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "遅刻") <> 0 Then
             If ActiveCell.Offset(0, 7).Value = "" Then
                 MsgBox ("遅刻の事由を記入して下さい")
                 ValidationCheck = False
@@ -401,7 +408,7 @@ Function ValidationCheck() As Boolean
                 Exit Function
             End If
         End If
-        If InStr(ActiveCell.Offset(0, 2).Value, "早退") <> 0 Then
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "早退") <> 0 Then
             If ActiveCell.Offset(0, 7).Value = "" Then
                 MsgBox ("早退の事由を記入して下さい")
                 ValidationCheck = False
@@ -413,7 +420,7 @@ Function ValidationCheck() As Boolean
                 Exit Function
             End If
         End If
-        If InStr(ActiveCell.Offset(0, 2).Value, "午前休") <> 0 Then
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "午前休") <> 0 Then
             If ActiveCell.Offset(0, 7).Value = "" Then
                 MsgBox ("午前休の事由を記入して下さい")
                 ValidationCheck = False
@@ -425,7 +432,7 @@ Function ValidationCheck() As Boolean
                 Exit Function
             End If
         End If
-        If InStr(ActiveCell.Offset(0, 2).Value, "午後休") <> 0 Then
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "午後休") <> 0 Then
             If ActiveCell.Offset(0, 7).Value = "" Then
                 MsgBox ("午後休の事由を記入して下さい")
                 ValidationCheck = False
@@ -437,7 +444,7 @@ Function ValidationCheck() As Boolean
                 Exit Function
             End If
         End If
-        If InStr(ActiveCell.Offset(0, 2).Value, "全休") <> 0 Then
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "全休") <> 0 Then
             If ActiveCell.Offset(0, 7).Value = "" Then
                 MsgBox ("全休の事由を記入して下さい")
                 ValidationCheck = False
@@ -449,7 +456,7 @@ Function ValidationCheck() As Boolean
                 Exit Function
             End If
         End If
-        If InStr(ActiveCell.Offset(0, 2).Value, "代休") <> 0 Then
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "代休") <> 0 Then
             If ActiveCell.Offset(0, 7).Value = "" Then
                 MsgBox ("いつの代休なのか記入して下さい")
                 ValidationCheck = False
@@ -466,7 +473,7 @@ Function ValidationCheck() As Boolean
             End If
         End If
 ' 有給休暇はExcel版の仕様から廃止になった
-'        If InStr(ActiveCell.Offset(0, 2).Value, "有給休暇") <> 0 Then
+'        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "有給休暇") <> 0 Then
 '            If ActiveCell.Offset(0, 3).Value <> "" Or ActiveCell.Offset(0, 4).Value <> "" Or _
 '                    ActiveCell.Offset(0, 5).Value <> "" Or ActiveCell.Offset(0, 6).Value <> "" Then
 '                MsgBox ("有給休暇の場合は開始時間、終了時間、休憩時間、作業時間を空欄にして下さい")
@@ -478,7 +485,7 @@ Function ValidationCheck() As Boolean
 '                Exit Function
 '            End If
 '        End If
-        If InStr(ActiveCell.Offset(0, 2).Value, "祝祭日") <> 0 Then
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "祝祭日") <> 0 Then
             If ActiveCell.Offset(0, 3).Value <> "" Or ActiveCell.Offset(0, 4).Value <> "" Or _
                     ActiveCell.Offset(0, 5).Value <> "" Or ActiveCell.Offset(0, 6).Value <> "" Then
                 MsgBox ("祝祭日に出勤の場合は休日出勤に変更してから入力して下さい")
