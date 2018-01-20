@@ -1,12 +1,16 @@
 Dim files() As String
 
-Private Sub ListView1_Enter()
+
+Private Sub UserForm_Initialize()
 '
-' リストの無い状態でのボタン無効
+' リストファイルの初期化
 '
 '
+    Erase files
+    ' リストの無い状態でのボタン無効
     CommandButton1.Enabled = False
 End Sub
+
 
 Private Sub ListView1_OLEDragDrop(Data As MSComctlLib.DataObject, Effect As Long, Button As Integer, Shift As Integer, x As Single, y As Single)
 '
@@ -27,6 +31,7 @@ Private Sub ListView1_OLEDragDrop(Data As MSComctlLib.DataObject, Effect As Long
     End If
 End Sub
 
+
 Private Sub CommandButton1_Click()
 '
 ' 添付完了後のファイル追加
@@ -46,7 +51,7 @@ Private Sub CommandButton1_Click()
     If hit_flag = False Then
         MsgBox ("予期せぬエラーが発生しました。" & vbCrLf & "交通費清算書の「報告書の発行」ボタンのクリックからやり直してください。")
         Erase files
-        UserForm2.Hide
+        Unload UserForm2
         Exit Sub
     End If
 
@@ -103,7 +108,7 @@ Private Sub CommandButton1_Click()
     Next
 
     CommandButton1.Enabled = False
-    UserForm2.Hide
+    Unload UserForm2
     Erase files
 
     wb.sheets(1).Range("A1").Select

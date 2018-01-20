@@ -1,0 +1,12 @@
+Private Sub Workbook_Open()
+    #If Win64 Then
+        MsgBox ( _
+            "MicrosoftForms" & vbCrLf & _
+            "はこのマシンでは利用できないため、オブジェクトを読み込めませんでした。" & vbCrLf & _
+            vbCrLf & _
+            "↑↑↑↑↑" & vbCrLf & _
+            "この表示が出ても継続して利用する事が出来ます。ご安心ください。" & vbCrLf & _
+            "当現象について詳しく知りたい方は「64bit版のエラーについて.docx」を一読下さい。" _
+        )
+    #End If
+End Sub

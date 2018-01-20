@@ -24,6 +24,7 @@ Sub Worksheet_Activate()
     Call ChangeSheet
 End Sub
 
+
 Sub ChangeSheet()
 '
 ' シートのフォーマットを生成
@@ -138,6 +139,7 @@ Sub ChangeSheet()
     End If
 End Sub
 
+
 Sub RegistData()
 '
 ' 勤務表の一括入力(登録)
@@ -245,6 +247,7 @@ Sub RegistData()
     Next
 End Sub
 
+
 Sub Publishment()
 '
 ' シートの印刷フォーマット作成
@@ -315,6 +318,7 @@ Sub Publishment()
 
     Application.DisplayAlerts = True
 End Sub
+
 
 Function ValidationCheck() As Boolean
 '
@@ -497,6 +501,7 @@ Function ValidationCheck() As Boolean
     Next
     ValidationCheck = True
 End Function
+
 
 ' 有給休暇はExcel版の仕様から廃止になった
 'Sub OpenUrl()

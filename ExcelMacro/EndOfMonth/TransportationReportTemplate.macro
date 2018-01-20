@@ -11,9 +11,11 @@ Sub Worksheet_Activate()
     Call ChangeSheet
 End Sub
 
+
 Sub ChangeSheet()
 '
 ' シートのフォーマットを生成
+'
 '
     Dim sheet As Worksheet
     Set sheet = ThisWorkbook.Worksheets("交通費精算書テンプレート")
@@ -37,7 +39,7 @@ Sub ChangeSheet()
     sheet.Range("B18").Select
     Dim i As Integer
     For i = 0 To 100
-        If i < 5 Then
+        If i < 4 Then
             sheet.Range("B" & 18 + i).Value = ""
             sheet.Range("B" & 18 + i).NumberFormatLocal = "m""月""d""日"";@"
             sheet.Range("C" & 18 + i).Value = ""
@@ -52,6 +54,7 @@ Sub ChangeSheet()
         ElseIf sheet.Range("B" & 18 + i + 2).Value <> "注意点" Then
             sheet.Rows(18 + i & ":" & 18 + i).Select
             Selection.Delete Shift:=xlUp
+            i = i - 1
         End If
         If sheet.Range("B" & 18 + i + 2).Value = "注意点" Then
             Exit For
@@ -61,6 +64,7 @@ Sub ChangeSheet()
     sheet.Range("D2").Select
     Call GetRange
 End Sub
+
 
 Function GetRange() As Variant
 '
@@ -100,6 +104,7 @@ Function GetRange() As Variant
     GetRange = rangetime
 End Function
 
+
 Sub Worksheet_Change(ByVal Target As Range)
 '
 ' 交通費の自動行追加
@@ -108,11 +113,11 @@ Sub Worksheet_Change(ByVal Target As Range)
     If Intersect(Target, Range("B:B")) Is Nothing Then
         Exit Sub
     Else
-    Dim i As Integer
+        Dim i As Integer
         For i = 0 To 100
             If ActiveSheet.Range("B" & 18 + i).Value = "" Then
                 If ActiveSheet.Range("B" & 18 + i + 2).Value <> "注意点" Then
-                    Exit Sub
+                    Exit For
                 Else
                     Dim active_address As String
                     active_address = ActiveCell.Address
@@ -120,13 +125,20 @@ Sub Worksheet_Change(ByVal Target As Range)
                     Selection.Copy
                     Selection.Insert Shift:=xlDown
                     Application.CutCopyMode = False
+                    ActiveSheet.Range("I" & 18 + i).Value = "=IF($F$" & (18 + i) & "=""往復"",$H$" & (18 + i) & "*2,$H$" & (18 + i) & ")" ' Insertによる計算式ズレを修正
                     ActiveSheet.Range(active_address).Select
-                    Exit Sub
+                    Exit For
                 End If
+            End If
+        Next
+        For i = 0 To 120
+            If ActiveSheet.Range("I" & 18 + i).Value = "合計" Then
+                ActiveSheet.Range("I3").Value = "=SUM($D$6+$D$10+$J$" & (18 + i) & ")"
             End If
         Next
     End If
 End Sub
+
 
 Sub Publishment()
 '
@@ -216,11 +228,13 @@ Sub Publishment()
             "フォルダを圧縮して提出お願い致します。" _
         )
     Else
+        Load UserForm1
         UserForm1.Show
     End If
 
     Application.DisplayAlerts = True
 End Sub
+
 
 Function ValidationCheck() As Boolean
 '
