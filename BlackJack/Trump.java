@@ -8,7 +8,7 @@ import java.util.Collections;
  * @auther TsukasaDewa
  */
 class Trump{
-	ArrayList<String> cards;
+	private ArrayList<String> cards;
 	// construct
 	public Trump(){
 		/* トランプ52枚の用意 */

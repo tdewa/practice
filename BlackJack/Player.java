@@ -6,8 +6,8 @@ import java.util.ArrayList;
  * @auther TsukasaDewa
  */
 class Player{
-	String playerName;
-	ArrayList<String> hand;
+	private String playerName;
+	private ArrayList<String> hand;
 	// construct
 	public Player(String name) {
 		this.playerName = name;
@@ -16,6 +16,10 @@ class Player{
 	// 名前を取得
 	public String getPlayerName() {
 		return this.playerName;
+	}
+	// 手札を取得
+	public ArrayList<String> getHand() {
+		return this.hand;
 	}
 	// 手札にカードをセット
 	public void setHand(String card) {
@@ -35,7 +39,7 @@ class Player{
 		int total = 0;
 		for (int i=0; i<this.hand.size(); i++) {
 			// 「J、Q、K」の絵柄カードは全て「10」とカウント
-			if (this.hand.get(i).equals("J") || 
+			if (this.hand.get(i).equals("J") ||
 					this.hand.get(i).equals("Q") ||
 					this.hand.get(i).equals("K")
 			) {
@@ -83,5 +87,9 @@ class Player{
 				return "(BlackJack)";
 			}
 		}
+	}
+	// 手札を空にする
+	public void clearHand() {
+		this.hand.clear();
 	}
 }
