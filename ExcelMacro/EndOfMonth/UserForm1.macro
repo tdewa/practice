@@ -1,22 +1,3 @@
-Private Sub UserForm_Initialize()
-'
-' 64ビット版Excelによって説明文を変更
-'
-'
-    #If Win64 Then
-        Label1.Caption = "「写真(スキャンデータ)を添付する」ボタンをクリックし、" & vbCrLf & _
-            "請求する交通費の履歴を青枠内に貼り付けてください｡" & vbCrLf & _
-            "（下記写真はJRにて印字したSuicaの履歴書）" & vbCrLf & _
-            "（私用で利用した部分は油性ペン等で消してください）"
-    #Else
-        Label1.Caption = "「写真(スキャンデータ)を添付する」ボタンをクリックし、" & vbCrLf & _
-            "請求する交通費の履歴を貼り付けてください｡" & vbCrLf & _
-            "（下記写真はJRにて印字したSuicaの履歴書）" & vbCrLf & _
-            "（私用で利用した部分は油性ペン等で消してください）"
-    #End If
-End Sub
-
-
 Private Sub CommandButton1_Click()
 '
 ' 写真を添付するボタン押下の
@@ -142,9 +123,9 @@ Private Sub AddBlueFrame()
     End If
 
     MsgBox ( _
-        "この青枠内に申請する履歴印字の証明書画像を挿入してください。" & vbCrLf & _
+        "この青枠内に申請する定期券の領収書、履歴印字の証明書画像を挿入してください。" & vbCrLf & _
         vbCrLf & _
-        "履歴印字ファイルの挿入が終わりましたら、" & vbCrLf & _
+        "定期券の領収書、履歴印字ファイルの挿入が終わりましたら、" & vbCrLf & _
         "「" & VBA.Left(wb.Name, 6) & "作業報告書(" & user_name & ").xlsx」と合わせて「" & VBA.Left(wb.Name, 6) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
         "zip圧縮ファイル名「" & VBA.Left(wb.Name, 6) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
         "フォルダを圧縮して提出お願い致します。" _
@@ -161,7 +142,7 @@ Private Sub AddDragDropFrame()
 '
 '
     ' フレーム「添付ファイルのドラッグ＆ドロップ」を表示
-    Load UserForm2
+    Load UserForm2 ' MEMO:Offce64bit版ではMSComctlLib.DataObjectが使用できないため、これが実行されるとListView1_OLEDragDrop関数にてコンパイルエラー発生
     UserForm2.Show
     ' 説明フレーム「添付について」は閉じる
     Unload UserForm1

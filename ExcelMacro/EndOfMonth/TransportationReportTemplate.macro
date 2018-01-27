@@ -11,7 +11,6 @@ Sub Worksheet_Activate()
     Call ChangeSheet
 End Sub
 
-
 Sub ChangeSheet()
 '
 ' シートのフォーマットを生成
@@ -65,7 +64,6 @@ Sub ChangeSheet()
     Call GetRange
 End Sub
 
-
 Function GetRange() As Variant
 '
 ' 申請期間取得
@@ -104,7 +102,6 @@ Function GetRange() As Variant
     GetRange = rangetime
 End Function
 
-
 Sub Worksheet_Change(ByVal Target As Range)
 '
 ' 交通費の自動行追加
@@ -138,7 +135,6 @@ Sub Worksheet_Change(ByVal Target As Range)
         Next
     End If
 End Sub
-
 
 Sub Publishment()
 '
@@ -193,16 +189,9 @@ Sub Publishment()
         user_name = split_name(0) & split_name(1)
     End If
 
-    Dim claim_flag As Boolean
     Dim description_flag As Boolean
-    claim_flag = False
     description_flag = False
     For i = 0 To 100
-        If claim_flag = False Then
-            If Sheet2.Range("B" & 18).Value <> "" Then
-               claim_flag = True
-            End If
-        End If
         If description_flag = False Then
             If Sheet2.Range("B" & 18 + i + 1).Value = "注意点" Then
                 description_flag = True
@@ -219,22 +208,11 @@ Sub Publishment()
     Sheet2.Range("A1").Select
 
     Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "交通費精算書(" & user_name & ").xlsx"
-    If claim_flag = False Then
-        MsgBox ( _
-            ThisWorkbook.Path & "\" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "交通費精算書(" & user_name & ").xls" & vbCrLf & _
-            "上記にファイルを保存しました。" & vbCrLf & _
-            "「" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "作業報告書(" & user_name & ").xlsx」と合わせて「" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
-            "zip圧縮ファイル名「" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
-            "フォルダを圧縮して提出お願い致します。" _
-        )
-    Else
-        Load UserForm1
-        UserForm1.Show
-    End If
+    Load UserForm1
+    UserForm1.Show
 
     Application.DisplayAlerts = True
 End Sub
-
 
 Function ValidationCheck() As Boolean
 '
