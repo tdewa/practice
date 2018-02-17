@@ -21,14 +21,14 @@ Sub ChangeSheet()
     sheet.Activate
     sheet.Range("D2").Value = ""
     sheet.Range("I3").Value = "=SUM($D$6+$D$10+$J$27)"
-    sheet.Range("I3").NumberFormatLocal = "\#,##0;\-#,##0"
+    sheet.Range("I3").NumberFormatLocal = "¥#,##0;¥-#,##0"
     sheet.Range("D6").Value = 0
-    sheet.Range("D6").NumberFormatLocal = "\#,##0;\-#,##0"
+    sheet.Range("D6").NumberFormatLocal = "¥#,##0;¥-#,##0"
     sheet.Range("F6").Value = ""
     sheet.Range("F7").Value = "平成　年　月　日〜平成　年　月　日"
     sheet.Range("D8").Value = ""
     sheet.Range("D10").Value = 0
-    sheet.Range("D10").NumberFormatLocal = "\#,##0;\-#,##0"
+    sheet.Range("D10").NumberFormatLocal = "¥#,##0;¥-#,##0"
     sheet.Range("F10").Value = ""
     sheet.Range("F11").Value = "平成　年　月　日〜平成　年　月　日"
     sheet.Range("D12").Value = ""
@@ -47,7 +47,7 @@ Sub ChangeSheet()
             sheet.Range("F" & 18 + i).Value = ""
             sheet.Range("G" & 18 + i).Value = ""
             sheet.Range("H" & 18 + i).Value = ""
-            sheet.Range("H" & 18 + i).NumberFormatLocal = "\#,##0;\-#,##0"
+            sheet.Range("H" & 18 + i).NumberFormatLocal = "¥#,##0;¥-#,##0"
             sheet.Range("I" & 18 + i).Value = "=IF($F$" & (18 + i) & "=""往復"",$H$" & (18 + i) & "*2,$H$" & (18 + i) & ")"
             sheet.Range("J" & 18 + i).Value = ""
         ElseIf sheet.Range("B" & 18 + i + 2).Value <> "注意点" Then
