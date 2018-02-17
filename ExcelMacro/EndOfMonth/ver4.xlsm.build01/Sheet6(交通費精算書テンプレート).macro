@@ -1,0 +1,401 @@
+Sub Worksheet_Activate()
+'
+' マクロ起動時に実行
+'
+'
+    Dim answer As Integer
+    answer = MsgBox("データを初期化しますか？", vbYesNo + vbQuestion, "初期化")
+    If answer = vbNo Then
+        Exit Sub
+    End If
+    Call ChangeSheet
+End Sub
+
+Sub ChangeSheet()
+'
+' シートのフォーマットを生成
+'
+'
+    Dim sheet As Worksheet
+    Set sheet = ThisWorkbook.Worksheets("交通費精算書テンプレート")
+    sheet.Activate
+    sheet.Range("D2").Value = ""
+    sheet.Range("I3").Value = "=SUM($D$6+$D$10+$J$27)"
+    sheet.Range("I3").NumberFormatLocal = "¥#,##0;¥-#,##0"
+    sheet.Range("D6").Value = 0
+    sheet.Range("D6").NumberFormatLocal = "¥#,##0;¥-#,##0"
+    sheet.Range("F6").Value = ""
+    sheet.Range("F7").Value = "平成　年　月　日〜平成　年　月　日"
+    sheet.Range("D8").Value = ""
+    sheet.Range("D10").Value = 0
+    sheet.Range("D10").NumberFormatLocal = "¥#,##0;¥-#,##0"
+    sheet.Range("F10").Value = ""
+    sheet.Range("F11").Value = "平成　年　月　日〜平成　年　月　日"
+    sheet.Range("D12").Value = ""
+    sheet.Range("H12").Value = ""
+    sheet.Range("H14").Value = ""
+
+    sheet.Range("B18").Select
+    Dim i As Integer
+    For i = 0 To 100
+        If i < 4 Then
+            sheet.Range("B" & 18 + i).Value = ""
+            sheet.Range("B" & 18 + i).NumberFormatLocal = "m""月""d""日"";@"
+            sheet.Range("C" & 18 + i).Value = ""
+            sheet.Range("D" & 18 + i).Value = ""
+            sheet.Range("E" & 18 + i).Value = ""
+            sheet.Range("F" & 18 + i).Value = ""
+            sheet.Range("G" & 18 + i).Value = ""
+            sheet.Range("H" & 18 + i).Value = ""
+            sheet.Range("H" & 18 + i).NumberFormatLocal = "¥#,##0;¥-#,##0"
+            sheet.Range("I" & 18 + i).Value = "=IF($F$" & (18 + i) & "=""往復"",$H$" & (18 + i) & "*2,$H$" & (18 + i) & ")"
+            sheet.Range("J" & 18 + i).Value = ""
+        ElseIf sheet.Range("B" & 18 + i + 2).Value <> "注意点" Then
+            sheet.Rows(18 + i & ":" & 18 + i).Select
+            Selection.Delete Shift:=xlUp
+            i = i - 1
+        End If
+        If sheet.Range("B" & 18 + i + 2).Value = "注意点" Then
+            Exit For
+        End If
+    Next
+
+    sheet.Range("D2").Select
+    Call GetRange
+End Sub
+
+Function GetRange() As Variant
+'
+' 申請期間取得
+'
+'
+    Dim rangetime() As String
+    Dim resetdate As String
+    rangetime = Split(ActiveWorkbook.ActiveSheet.Range("D2").Value, "〜")
+    If UBound(rangetime) > 0 Then
+        If VBA.IsDate(rangetime(0)) = True And VBA.IsDate(rangetime(1)) = True Then
+            GetRange = rangetime
+        ElseIf VBA.IsDate(rangetime(0)) = False And VBA.IsDate(rangetime(1)) = False Then
+            If VBA.Day(VBA.Date) < 5 Then
+                resetdate = VBA.DateSerial(VBA.Year(VBA.Date), VBA.Month(VBA.Date), 0)
+                ActiveWorkbook.ActiveSheet.Range("D2").Value = VBA.Format(resetdate, "gggee年mm月01日") & "　〜　" & VBA.Format(resetdate, "gggee年mm月dd日")
+            Else
+                resetdate = VBA.DateSerial(VBA.Year(VBA.Date), VBA.Month(VBA.Date) + 1, 0)
+                ActiveWorkbook.ActiveSheet.Range("D2").Value = VBA.Format(resetdate, "gggee年mm月01日") & "〜" & VBA.Format(resetdate, "gggee年mm月dd日")
+            End If
+            MsgBox ("期間入力の修正を行いました。" & vbCrLf & "期間に間違いがないか再度確認して下さい")
+            ReDim rangetime(1)
+        Else
+            ReDim rangetime(1)
+        End If
+    Else
+        If VBA.Day(VBA.Date) < 5 Then
+            resetdate = VBA.DateSerial(VBA.Year(VBA.Date), VBA.Month(VBA.Date), 0)
+            ActiveWorkbook.ActiveSheet.Range("D2").Value = VBA.Format(resetdate, "gggee年mm月01日") & "〜" & VBA.Format(resetdate, "gggee年mm月dd日")
+        Else
+            resetdate = VBA.DateSerial(VBA.Year(VBA.Date), VBA.Month(VBA.Date) + 1, 0)
+            ActiveWorkbook.ActiveSheet.Range("D2").Value = VBA.Format(resetdate, "gggee年mm月01日") & "〜" & VBA.Format(resetdate, "gggee年mm月dd日")
+        End If
+        MsgBox ("期間入力の修正を行いました。" & vbCrLf & "期間に間違いがないか再度確認して下さい")
+        ReDim rangetime(1)
+    End If
+    GetRange = rangetime
+End Function
+
+Sub Worksheet_Change(ByVal Target As Range)
+'
+' 交通費の自動行追加
+'
+'
+    If Intersect(Target, Range("B:B")) Is Nothing Then
+        Exit Sub
+    Else
+        Dim i As Integer
+        For i = 0 To 100
+            If ActiveSheet.Range("B" & 18 + i).Value = "" Then
+                If ActiveSheet.Range("B" & 18 + i + 2).Value <> "注意点" Then
+                    Exit For
+                Else
+                    Dim active_address As String
+                    active_address = ActiveCell.Address
+                    ActiveSheet.Rows(18 + i & ":" & 18 + i).Select
+                    Selection.Copy
+                    Selection.Insert Shift:=xlDown
+                    Application.CutCopyMode = False
+                    ActiveSheet.Range("I" & 18 + i).Value = "=IF($F$" & (18 + i) & "=""往復"",$H$" & (18 + i) & "*2,$H$" & (18 + i) & ")" ' Insertによる計算式ズレを修正
+                    ActiveSheet.Range(active_address).Select
+                    Exit For
+                End If
+            End If
+        Next
+        For i = 0 To 120
+            If ActiveSheet.Range("I" & 18 + i).Value = "合計" Then
+                ActiveSheet.Range("I3").Value = "=SUM($D$6+$D$10+$J$" & (18 + i) & ")"
+            End If
+        Next
+    End If
+End Sub
+
+Sub Publishment()
+'
+' シートの印刷フォーマット作成
+'
+'
+    ' 入力チェック
+    If ValidationCheck = False Then
+        Exit Sub
+    End If
+
+    Dim Sheet1 As Worksheet, Sheet2 As Worksheet
+
+    Set Sheet1 = ThisWorkbook.Worksheets("交通費精算書テンプレート")
+    Workbooks.Add
+    Set Sheet2 = ActiveWorkbook.ActiveSheet
+
+    Application.DisplayAlerts = False
+
+    Sheet1.Activate
+    Dim last_row As Integer
+    Dim i As Integer
+    For i = 18 To 100 Step 1
+        If VBA.InStr(Sheet1.Range("I" & i).Value, "合計") <> 0 Then
+            Sheet1.Range("I" & i).Select
+            last_row = i
+            Exit For
+        End If
+    Next
+    Sheet1.Cells(1, 1).Select
+    Sheet1.Range(Sheet1.Cells(1, 1).Address, Sheet1.Cells(last_row, 10).Address).Copy
+    Sheet2.Activate
+    Sheet2.Range("A1").PasteSpecial Paste:=xlPasteAll
+    Sheet2.Range("A1").PasteSpecial Paste:=xlPasteColumnWidths
+    Sheet2.Range("A1").Select
+    Sheet2.Name = "交通費精算書"
+
+    Dim rangetime() As String
+    rangetime = GetRange
+
+    Dim split_name() As String
+    Dim user_name As String
+    split_name = VBA.Split(Sheet1.Range("D4").Value, "　")
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
+    Else
+        user_name = split_name(0)
+    End If
+    split_name = VBA.Split(user_name, " ")
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
+    Else
+        user_name = split_name(0)
+    End If
+
+    Dim description_flag As Boolean
+    description_flag = False
+    For i = 0 To 100
+        If description_flag = False Then
+            If Sheet2.Range("B" & 18 + i + 1).Value = "注意点" Then
+                description_flag = True
+            End If
+        Else
+            Sheet2.Range("B" & 18 + i & ":G" & 18 + i).Select
+            Selection.Delete Shift:=xlUp
+            If Sheet2.Range("B" & 18 + i).Value = "" Then
+                Exit For
+            End If
+            i = i - 1 'インクリメント避け
+        End If
+    Next
+    Sheet2.Range("A1").Select
+
+    Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & VBA.Year(rangetime(0)) & VBA.Format(rangetime(0), "mm") & "交通費精算書(" & user_name & ").xlsx"
+    Load UserForm3
+    UserForm3.Show
+
+    Application.DisplayAlerts = True
+End Sub
+
+Function ValidationCheck() As Boolean
+'
+' 入力チェック
+'
+'
+    If ActiveSheet.Range("D2").Value = "" Then
+        MsgBox ("期間が空欄です")
+        ValidationCheck = False
+        ActiveSheet.Range("D2").Select
+        Exit Function
+    End If
+    If ActiveSheet.Range("D3").Value = "" Then
+        MsgBox ("部署名が空欄です")
+        ValidationCheck = False
+        ActiveSheet.Range("D3").Select
+        Exit Function
+    End If
+    If ActiveSheet.Range("D4").Value = "" Then
+        MsgBox ("氏名が空欄です")
+        ValidationCheck = False
+        ActiveSheet.Range("D4").Select
+        Exit Function
+    End If
+
+    Dim rangetime() As String
+    rangetime = GetRange
+    If VBA.Year(rangetime(1)) > VBA.Year(VBA.Now) Or _
+            VBA.Year(rangetime(1)) = VBA.Year(VBA.Now) And VBA.Month(rangetime(1)) > VBA.Month(VBA.Now) Then
+        MsgBox ("未来の月の申請をすることはできません")
+        ActiveSheet.Range("D2").Select
+        ValidationCheck = False
+        Exit Function
+    End If
+
+    Dim i As Integer
+    For i = 0 To 1
+        If ActiveSheet.Range("D" & 6 + i * 4).Value > 0 Then
+            If ActiveSheet.Range("F" & 6 + i * 4).Value = "" Then
+                MsgBox ("有効期間が空欄です")
+                ValidationCheck = False
+                ActiveSheet.Range("F" & 6 + i * 4).Select
+                Exit Function
+            End If
+            If ActiveSheet.Range("F" & 7 + i * 4).Value = "" Then
+                MsgBox ("有効期間が空欄です")
+                ValidationCheck = False
+                ActiveSheet.Range("F" & 7 + i * 4).Select
+                Exit Function
+            End If
+            Dim timestr As String
+            Dim seasontime() As String
+            seasontime = Split(ActiveWorkbook.ActiveSheet.Range("F" & 7 + i * 4).Value, "〜")
+            If UBound(seasontime) > 0 Then
+                If VBA.IsDate(seasontime(0)) = True Then
+                    If VBA.DateDiff("d", VBA.CDate(rangetime(0)), VBA.CDate(seasontime(0))) < 0 Or _
+                            VBA.DateDiff("y", VBA.CDate(rangetime(0)), VBA.CDate(seasontime(0))) < 0 Or _
+                            ( _
+                                VBA.DateDiff("y", VBA.CDate(rangetime(0)), VBA.CDate(seasontime(0))) = 0 And _
+                                VBA.DateDiff("m", VBA.CDate(rangetime(0)), VBA.CDate(seasontime(0))) < 0 _
+                            ) Then
+                        MsgBox ("期間外の定期申請があります")
+                        ValidationCheck = False
+                        ActiveSheet.Range("F" & 7 + i * 4).Select
+                        Exit Function
+                    End If
+                Else
+                    MsgBox ("期間入力が不正です")
+                    ValidationCheck = False
+                    ActiveSheet.Range("F" & 7 + i * 4).Select
+                    Exit Function
+                End If
+            Else
+                MsgBox ("期間入力が不正です")
+                ValidationCheck = False
+                ActiveSheet.Range("F" & 7 + i * 4).Select
+                Exit Function
+            End If
+            If ActiveSheet.Range("D" & 8 + i * 4).Value = "" Then
+                MsgBox ("通勤経路が空欄です")
+                ValidationCheck = False
+                ActiveSheet.Range("D" & 8 + i * 4).Select
+                Exit Function
+            End If
+            If ActiveSheet.Range("D" & 8 + i * 4).Value = "" Or VBA.InStr(ActiveSheet.Range("D" & 8 + i * 4).Value, "〜") = 0 Then
+                MsgBox ("経路が未記入" & vbCrLf & "或いは、どこからどこまでの区間を利用したのか「〜」を用いて記載して下さい")
+                ValidationCheck = False
+                ActiveSheet.Range("D" & 8 + i * 4).Value
+                Exit Function
+            End If
+        End If
+    Next
+    If ActiveSheet.Range("D10").Value > 0 Then
+        If ActiveSheet.Range("H12").Value = "" Then
+            MsgBox ("定期代②の購入理由が空欄です")
+            ValidationCheck = False
+            ActiveSheet.Range("H12").Select
+            Exit Function
+        End If
+        If ActiveSheet.Range("H12").Value = "その他" And ActiveSheet.Range("H14").Value = "" Then
+            MsgBox ("定期代②の購入理由がその他理由が空欄です")
+            ValidationCheck = False
+            ActiveSheet.Range("H14").Select
+            Exit Function
+        End If
+    End If
+
+    ActiveSheet.Range("B18").Select
+    Dim commuter_flag As Boolean
+    Dim commuter_memo_flag As Boolean
+    commuter_flag = False
+    commuter_memo_flag = False
+    For i = 0 To 100
+        If ActiveCell.Offset(i, 0).Value <> "" And VBA.IsDate(ActiveCell.Offset(i, 0).Value) = True Then
+            If VBA.DateDiff("d", VBA.CDate(rangetime(0)), ActiveCell.Offset(i, 0).Value) < 0 Or _
+                    VBA.DateDiff("d", VBA.CDate(rangetime(1)), ActiveCell.Offset(i, 0).Value) > 0 Then
+                MsgBox ("期間外の申請があります")
+                ValidationCheck = False
+                ActiveCell.Offset(i, 0).Select
+                Exit Function
+            End If
+            If ActiveCell.Offset(i, 1).Value = "" Then
+                MsgBox ("出向先が未記入です")
+                ValidationCheck = False
+                ActiveCell.Offset(i, 1).Select
+                Exit Function
+            End If
+            If ActiveCell.Offset(i, 2).Value = "" Then
+                MsgBox ("場所が未記入です")
+                ValidationCheck = False
+                ActiveCell.Offset(i, 2).Select
+                Exit Function
+            End If
+            If ActiveCell.Offset(i, 3).Value = "" Or VBA.InStr(ActiveCell.Offset(i, 3).Value, "〜") = 0 Then
+                MsgBox ("経路が未記入" & vbCrLf & "或いは、どこからどこまでの区間を利用したのか「〜」を用いて記載して下さい")
+                ValidationCheck = False
+                ActiveCell.Offset(i, 3).Select
+                Exit Function
+            End If
+            If ActiveCell.Offset(i, 4).Value = "" Then
+                MsgBox ("分類が未選択です")
+                ValidationCheck = False
+                ActiveCell.Offset(i, 4).Select
+                Exit Function
+            End If
+            If ActiveCell.Offset(i, 5).Value = "" Then
+                MsgBox ("配賦先が未選択です")
+                ValidationCheck = False
+                ActiveCell.Offset(i, 5).Select
+                Exit Function
+            ElseIf ActiveCell.Offset(i, 5).Value = "その他" And ActiveCell.Offset(i, 8).Value = "" Then
+                MsgBox ("その他の備考欄に事由を明記して下さい")
+                ValidationCheck = False
+                ActiveCell.Offset(i, 5).Select
+                Exit Function
+            End If
+            If ActiveCell.Offset(i, 6).Value = "" Then
+                MsgBox ("金額が未記入です")
+                ValidationCheck = False
+                ActiveCell.Offset(i, 6).Select
+                Exit Function
+            End If
+            If ActiveCell.Offset(i, 7).Value = "合計" And ActiveCell.Offset(i, 8).Value = 0 Then
+                MsgBox ("申請する内容がありません")
+                ValidationCheck = False
+                Exit Function
+            End If
+        ElseIf ActiveCell.Offset(i, 7).Value = "合計" Then
+            Exit For
+        End If
+    Next
+    If ActiveSheet.Range("I3").Value = 0 Then
+        MsgBox ("申請する内容がありません")
+        ValidationCheck = False
+        ActiveSheet.Range("B18").Select
+        Exit Function
+    End If
+    ValidationCheck = True
+End Function

@@ -1,0 +1,129 @@
+Private Sub CommandButton1_Click()
+'
+' 写真を添付する用の青枠作成
+'
+'
+    ' 青枠を追加するWorkBookを選択
+    Dim wb As Workbook
+    Dim hit_flag As Boolean
+    hit_flag = False
+    Dim i As Integer
+    For i = 1 To Workbooks.Count
+        Set wb = Workbooks(i)
+        If VBA.InStr(wb.Name, "交通費") <> 0 Then
+            hit_flag = True
+            Exit For
+        End If
+    Next
+    If hit_flag = False Then
+        MsgBox ( _
+            "予期せぬエラーが発生しました。" & vbCrLf & _
+            "交通費清算書の「報告書の発行」ボタンのクリックからやり直してください。" _
+        )
+        Unload UserForm1
+        Exit Sub
+    End If
+
+    wb.Sheets(1).Activate
+
+    ' 青枠の作成位置
+    Dim last_row As Integer
+    For i = 0 To 100
+        If wb.Sheets(1).Range("I" & 18 + i).Value = "" Then
+            last_row = 18 + i + 1
+            Exit For
+        End If
+    Next
+
+    ' 青枠の作成
+    wb.Sheets(1).Range("B" & last_row & ":J" & (last_row + 15)).Select
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .ReadingOrder = xlContext
+        .MergeCells = True
+    End With
+    With Selection.Font
+        .Name = "ＭＳ 明朝"
+        .FontStyle = "標準"
+        .Size = 72
+        .Strikethrough = False
+        .Superscript = False
+        .Subscript = False
+        .OutlineFont = False
+        .Shadow = False
+        .Underline = xlUnderlineStyleNone
+        .ThemeColor = xlThemeColorAccent1
+        .TintAndShade = 0
+        .ThemeFont = xlThemeFontNone
+    End With
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .ThemeColor = 5
+        .TintAndShade = 0
+        .Weight = xlThick
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .ThemeColor = 5
+        .TintAndShade = 0
+        .Weight = xlThick
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .ThemeColor = 5
+        .TintAndShade = 0
+        .Weight = xlThick
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .ThemeColor = 5
+        .TintAndShade = 0
+        .Weight = xlThick
+    End With
+    Selection.Borders(xlInsideVertical).LineStyle = xlNone
+    Selection.Borders(xlInsideHorizontal).LineStyle = xlNone
+    wb.Sheets(1).Range("B" & last_row).FormulaR1C1 = "履歴印字貼付"
+
+    wb.Sheets(1).Range("B" & last_row).Select
+
+    Dim split_name() As String
+    Dim user_name As String
+    split_name = VBA.Split(wb.Sheets(1).Range("D4").Value, "　")
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
+    Else
+        user_name = split_name(0)
+    End If
+    split_name = VBA.Split(user_name, " ")
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
+    Else
+        user_name = split_name(0)
+    End If
+
+    MsgBox ( _
+        "この青枠内に申請する定期券の領収書、履歴印字の証明書画像を挿入してください。" & vbCrLf & _
+        vbCrLf & _
+        "定期券の領収書、履歴印字ファイルの挿入が終わりましたら、" & vbCrLf & _
+        "「" & VBA.Left(wb.Name, 6) & "作業報告書(" & user_name & ").xlsx」と合わせて「" & VBA.Left(wb.Name, 6) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
+        "zip圧縮ファイル名「" & VBA.Left(wb.Name, 6) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
+        "フォルダを圧縮して提出お願い致します。" _
+    )
+
+    ' 説明フレーム「添付について」は閉じる
+    Unload UserForm1
+End Sub

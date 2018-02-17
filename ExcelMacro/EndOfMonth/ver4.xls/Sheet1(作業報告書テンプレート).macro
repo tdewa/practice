@@ -1,0 +1,626 @@
+Sub Worksheet_Activate()
+'
+' マクロ起動時に実行
+'
+'
+    Dim answer As Integer
+    answer = MsgBox("データを初期化しますか？", vbYesNo + vbQuestion, "初期化")
+    If answer = vbNo Then
+        Exit Sub
+    End If
+    Dim sheet As Worksheet
+    Dim now_string As String
+    Set sheet = ThisWorkbook.Worksheets("祝日")
+    ' 現在の月を設定
+    now_string = VBA.Year(VBA.Now())
+
+    sheet.Range("$A$2:$B$199").AutoFilter Field:=1, Criteria1:=">=" & now_string & "/1/1", Operator:=xlAnd, _
+        Criteria2:="<=" & now_string & "/12/31"
+
+    Set sheet = ThisWorkbook.Worksheets("作業報告書テンプレート")
+    sheet.Activate
+    sheet.Range("B3").Value = VBA.Format(VBA.Date, "yyyy/mm/01")
+    sheet.Range("B3").NumberFormatLocal = "yyyy年mm月"
+    Call ChangeSheet
+End Sub
+
+Sub ChangeSheet()
+'
+' シートのフォーマットを生成
+'
+'
+    ' 提示設定のクリア
+    Dim next_row As Integer
+    Dim i As Integer
+    For i = 1 To 100
+        If VBA.InStr(ActiveSheet.Range("B" & i).Value, "勤務") <> 0 And VBA.InStr(ActiveSheet.Range("B" & i).Value, "情報") = 0 Then
+            ActiveSheet.Range("D" & i).Select
+            ActiveSheet.Range("D" & i).ClearContents
+            ActiveSheet.Range("F" & i).Select
+            ActiveSheet.Range("F" & i).ClearContents
+            ActiveCell.NumberFormatLocal = "h:mm"
+            ActiveSheet.Range("F" & i + 1).Select
+            ActiveSheet.Range("F" & i + 1).ClearContents
+            ActiveCell.NumberFormatLocal = "h:mm"
+            ActiveSheet.Range("H" & i).Select
+            ActiveSheet.Range("H" & i).ClearContents
+            ActiveCell.NumberFormatLocal = "h:mm"
+        ElseIf VBA.InStr(ActiveSheet.Range("B" & i).Value, "勤務") <> 0 And VBA.InStr(ActiveSheet.Range("B" & i).Value, "情報") <> 0 Then
+            next_row = i
+            Exit For
+        End If
+    Next
+
+    ActiveSheet.Range("B" & next_row).Offset(2, 0).Select
+    ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).ClearContents
+    ActiveCell.Value = ActiveSheet.Range("B3").Value
+    ActiveCell.NumberFormatLocal = "m/d"
+
+    ' 日付の範囲を絞る
+    Dim sheet As Worksheet
+    Dim start_cell, end_cell As String
+    Set sheet = ThisWorkbook.Worksheets("祝日")
+    start_cell = ""
+    end_cell = ""
+    For i = 0 To 100
+        If sheet.Range("A2").Offset(i, 0).Value <> "" Then
+            If VBA.Year(sheet.Range("A2").Offset(i, 0).Value) = VBA.Year(ActiveCell.Value) And VBA.Month(sheet.Range("A2").Offset(i, 0).Value) = VBA.Month(ActiveCell.Value) Then
+                If start_cell <> "" Then
+                    end_cell = sheet.Range("A2").Offset(i, 0).Address
+                Else
+                    start_cell = sheet.Range("A2").Offset(i, 0).Address
+                End If
+            ElseIf end_cell <> "" Then
+                Exit For
+            ElseIf start_cell <> "" Then
+                end_cell = start_cell
+            End If
+        End If
+    Next
+
+    ' 31日分フォーマット
+    Dim j As Integer
+    For i = 0 To 30
+        ActiveCell.Offset(0, 1).Value = ActiveCell.Value
+        ActiveCell.Offset(0, 1).NumberFormatLocal = "aaa"
+        ActiveCell.Offset(0, 6).Value = "=IF(OR(" & ActiveCell.Offset(0, 3).Address & "="""", " & ActiveCell.Offset(0, 4).Address & "=""""," & ActiveCell.Offset(0, 5).Address & "=""""),"""",IF(" & ActiveCell.Offset(0, 3).Address & ">" & ActiveCell.Offset(0, 4).Address & ",1-" & ActiveCell.Offset(0, 3).Address & "+" & ActiveCell.Offset(0, 4).Address & "-" & ActiveCell.Offset(0, 5).Address & "," & ActiveCell.Offset(0, 4).Address & "-" & ActiveCell.Offset(0, 3).Address & "-" & ActiveCell.Offset(0, 5).Address & "))"
+        ActiveCell.Offset(0, 6).NumberFormatLocal = "h:mm"
+        If VBA.Weekday(ActiveCell.Offset(0, 1).Value) <> 7 And Weekday(ActiveCell.Offset(0, 1).Value) <> 1 Then
+            ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).Interior.Color = VBA.RGB(255, 255, 255)
+        Else
+            ActiveCell.Offset(0, 2).Value = "祝祭日"
+            ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).Interior.Color = VBA.RGB(153, 204, 255)
+        End If
+        If start_cell <> "" Then
+            For j = 0 To 50
+                If ActiveCell.Value = sheet.Range(start_cell).Offset(j, 0).Value Then
+                    With ActiveCell
+                        .Offset(0, 2).Value = "祝祭日"
+                        .Offset(0, 7).Value = sheet.Range(start_cell).Offset(j, 1).Value
+                        ActiveSheet.Range(.Address & ":" & .Offset(0, 7).Address).Interior.Color = VBA.RGB(255, 128, 128)
+                    End With
+                End If
+                If sheet.Range(start_cell).Offset(j, 0).Address = sheet.Range(end_cell).Address Then
+                    Exit For
+                End If
+            Next
+        End If
+        ActiveCell.Offset(1, 0).Activate
+        If ActiveCell.Value <> "出勤日数" Then
+            ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).ClearContents
+            ActiveCell.Value = ActiveSheet.Range(ActiveCell.Offset(-1, 0).Address).Value + 1
+            ActiveCell.NumberFormatLocal = "m/d"
+            If VBA.Format(ActiveCell.Value, "m") <> VBA.Format(ActiveSheet.Range(ActiveCell.Offset(-1, 0).Address).Value, "m") Then
+                For j = i To 30
+                    If ActiveCell.Value <> "出勤日数" Then
+                        ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).ClearContents
+                        ActiveSheet.Range(ActiveCell.Address & ":" & ActiveCell.Offset(0, 7).Address).Interior.Color = VBA.RGB(255, 255, 255)
+                    Else
+                        Exit For
+                    End If
+                    ActiveCell.Offset(1, 0).Activate
+                Next
+                ActiveSheet.Range("B" & next_row).Offset(2, 0).Select
+                Exit For
+            End If
+        Else
+            ActiveSheet.Range("B" & next_row).Offset(2, 0).Select
+            Exit For
+        End If
+    Next
+
+    Dim answer As Integer
+    If ActiveSheet.Range("K21").Value <> "" Or ActiveSheet.Range("L21").Value <> "" Or ActiveSheet.Range("M21").Value <> "" Or ActiveSheet.Range("N21").Value <> "" Then
+        answer = MsgBox("２．の枠内の入力データも削除しますか？", vbYesNo + vbQuestion, "削除確認")
+        If answer = vbYes Then
+            ActiveSheet.Range("K21:N21").ClearContents
+        End If
+    End If
+End Sub
+
+Sub RegistData()
+'
+' 勤務表の一括入力(登録)
+'
+'
+    Dim next_row As Integer
+    Dim i As Integer
+    For i = 1 To 100
+        If VBA.InStr(ActiveSheet.Range("B" & i).Value, "勤務情報") <> 0 Then
+            next_row = i
+            Exit For
+        End If
+    Next
+
+    Dim commuter_status As String
+    Dim start_time As String, end_time As String, rest_time As String
+    Dim answer As Integer
+    commuter_status = ActiveSheet.Range("K21").Value
+    start_time = ActiveSheet.Range("L21").Value
+    end_time = ActiveSheet.Range("M21").Value
+    rest_time = ActiveSheet.Range("N21").Value
+    If commuter_status = "" Or start_time = "" Or end_time = "" Or rest_time = "" Then
+        answer = MsgBox("未入力箇所がありますが宜しいですか？", vbYesNo + vbQuestion, "登録確認")
+        If answer = vbNo Then
+            Exit Sub
+        End If
+    End If
+    If start_time <> "" Then
+        If VBA.IsDate("01/01/01 " & VBA.Format(start_time, "hh:mm:dd")) = False Then
+            MsgBox ("開始時間の入力が時間フォーマットではありません。")
+            Exit Sub
+        ElseIf VBA.Minute(VBA.Format(start_time, "hh:mm:dd")) Mod 15 > 0 Then
+            MsgBox ("開始時間の入力を15分刻みにて入力してください。")
+            Exit Sub
+        End If
+    End If
+    If end_time <> "" Then
+        If VBA.IsDate("01/01/01 " & VBA.Format(end_time, "hh:mm:dd")) = False Then
+            MsgBox ("終了時間の入力が時間フォーマットではありません。")
+            Exit Sub
+        ElseIf VBA.Minute(VBA.Format(end_time, "hh:mm:dd")) Mod 15 > 0 Then
+            MsgBox ("終了時間の入力を15分刻みにて入力してください。")
+            Exit Sub
+        End If
+    End If
+    If rest_time <> "" Then
+        If VBA.IsDate("01/01/01 " & VBA.Format(rest_time, "h:mm:dd")) = False Then
+            MsgBox ("休憩時間の入力が時間フォーマットではありません。")
+            Exit Sub
+        ElseIf VBA.Minute(VBA.Format(rest_time, "hh:mm:dd")) Mod 15 > 0 Then
+            MsgBox ("休憩時間の入力を15分刻みにて入力してください。")
+            Exit Sub
+        End If
+    End If
+
+    ' 日付の範囲を絞る
+    Dim sheet As Worksheet
+    Dim start_cell As String, end_cell As String
+    Set sheet = ThisWorkbook.Worksheets("祝日")
+    start_cell = ""
+    end_cell = ""
+    For i = 0 To 1000
+        If sheet.Range("A2").Offset(i, 0).Value <> "" Then
+            If VBA.Year(sheet.Range("A2").Offset(i, 0).Value) = VBA.Year(sheet.Range("A2").Offset(i, 0).Value) And VBA.Month(sheet.Range("A2").Offset(i, 0).Value) = VBA.Month(sheet.Range("A2").Offset(i, 0).Value) Then
+                If start_cell <> "" Then
+                    end_cell = sheet.Range("B2").Offset(i, 0).Address
+                Else
+                    start_cell = sheet.Range("B2").Offset(i, 0).Address
+                End If
+            ElseIf end_cell <> "" Then
+                Exit For
+            ElseIf start_cell <> "" Then
+                end_cell = start_cell
+            End If
+        End If
+    Next
+
+    ActiveSheet.Range("B5").Offset(2, 0).Select
+
+    For i = 1 To 20
+        If VBA.InStr(ActiveSheet.Range("B" & i).Value, "勤務１") <> 0 Then
+            ActiveSheet.Range("D" & i).Value = commuter_status
+            ActiveSheet.Range("F" & i).Value = start_time
+            ActiveSheet.Range("F" & i).NumberFormatLocal = "h:mm"
+            ActiveSheet.Range("F" & i + 1).Value = end_time
+            ActiveSheet.Range("F" & i + 1).NumberFormatLocal = "h:mm"
+            ActiveSheet.Range("H" & i).Value = rest_time
+            ActiveSheet.Range("H" & i).NumberFormatLocal = "h:mm"
+            Exit For
+        End If
+    Next
+
+    ActiveSheet.Range("B" & next_row).Offset(2, 0).Select
+
+    Dim hit_flag As Boolean
+    Dim j As Integer
+    For i = 0 To 30
+        hit_flag = False
+        If VBA.Weekday(ActiveCell.Offset(0, 1).Value) = 7 Or VBA.Weekday(ActiveCell.Offset(0, 1).Value) = 1 Then
+            hit_flag = True
+        ElseIf ActiveCell.Offset(0, 3).Value <> "" Or ActiveCell.Offset(0, 4).Value <> "" Or _
+                ActiveCell.Offset(0, 5).Value <> "" Or ActiveCell.Offset(0, 7).Value <> "" Then
+            hit_flag = True
+        ElseIf start_cell <> "" Then
+            For j = 0 To 50
+                If ActiveCell.Value = sheet.Range(start_cell).Offset(j, 0).Value Then
+                    hit_flag = True
+                End If
+                If sheet.Range(start_cell).Offset(j, 0).Address = sheet.Range(end_cell).Address Then
+                    Exit For
+                End If
+            Next
+        End If
+
+        If hit_flag = False Then
+            ActiveCell.Offset(0, 2).Value = "出勤"
+            ActiveCell.Offset(0, 3).Value = start_time
+            ActiveCell.Offset(0, 3).NumberFormatLocal = "h:mm"
+            ActiveCell.Offset(0, 4).Value = end_time
+            ActiveCell.Offset(0, 4).NumberFormatLocal = "h:mm"
+            ActiveCell.Offset(0, 5).Value = rest_time
+            ActiveCell.Offset(0, 5).NumberFormatLocal = "h:mm"
+            ActiveCell.Offset(0, 6).Value = "=IF(OR(" & ActiveCell.Offset(0, 3).Address & "="""", " & ActiveCell.Offset(0, 4).Address & "=""""," & ActiveCell.Offset(0, 5).Address & "=""""),"""",IF(" & ActiveCell.Offset(0, 3).Address & ">" & ActiveCell.Offset(0, 4).Address & ",1-" & ActiveCell.Offset(0, 3).Address & "+" & ActiveCell.Offset(0, 4).Address & "-" & ActiveCell.Offset(0, 5).Address & "," & ActiveCell.Offset(0, 4).Address & "-" & ActiveCell.Offset(0, 3).Address & "-" & ActiveCell.Offset(0, 5).Address & "))"
+            ActiveCell.Offset(0, 6).NumberFormatLocal = "h:mm"
+        End If
+
+        ActiveCell.Offset(1, 0).Activate
+        If ActiveCell.Value = "" Or ActiveCell.Value = "出勤日数" Then
+            ActiveSheet.Range("B10").Select
+            Exit For
+        End If
+    Next
+End Sub
+
+Sub Publishment()
+'
+' シートの印刷フォーマット作成
+'
+'
+    ' 入力チェック
+    If ValidationCheck = False Then
+        Exit Sub
+    End If
+
+    Dim Sheet1 As Worksheet, Sheet2 As Worksheet
+
+    Set Sheet1 = ThisWorkbook.Worksheets("作業報告書テンプレート")
+    Workbooks.Add
+    Set Sheet2 = ActiveWorkbook.ActiveSheet
+
+    Application.DisplayAlerts = False
+
+    Sheet1.Activate
+    Dim last_row As Integer
+    Dim i As Integer
+    For i = 1 To 200
+        If VBA.InStr(Sheet1.Range("B" & i).Value, "出勤日数") <> 0 Then
+            Sheet1.Range("B" & i).Select
+            last_row = i
+            Exit For
+        End If
+    Next
+    Sheet1.Range("B" & last_row).End(xlDown).Select
+    If ActiveCell.Row < 500 Then
+        last_row = ActiveCell.Row
+    End If
+
+    Sheet1.Cells(1, 1).Select
+    Sheet1.Range(Sheet1.Cells(1, 1).Address, Sheet1.Cells(last_row, 9).Address).Copy
+    Sheet2.Activate
+    Sheet2.Range("A1").PasteSpecial Paste:=xlPasteAll
+    Sheet2.Range("A1").PasteSpecial Paste:=xlPasteColumnWidths
+    Sheet2.Range("A1").Select
+    Sheet2.Name = "作業報告書"
+    Dim split_name() As String
+    Dim user_name As String
+    split_name = VBA.Split(Sheet1.Range("I3").Value, "　")
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
+    Else
+        user_name = split_name(0)
+    End If
+    split_name = VBA.Split(user_name, " ")
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
+    Else
+        user_name = split_name(0)
+    End If
+    Dim save_filename As String
+    Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & VBA.Year(Sheet1.Range("B3").Value) & VBA.Format(Sheet1.Range("B3").Value, "mm") & "作業報告書(" & user_name & ").xls"
+    MsgBox ( _
+        ThisWorkbook.Path & "\" & ActiveWorkbook.Name & vbCrLf & _
+        "上記にファイルを保存しました。" & vbCrLf & _
+        "「" & VBA.Left(ActiveWorkbook.Name, 6) & "交通費精算書(" & user_name & ").xls」と合わせて「" & VBA.Left(ActiveWorkbook.Name, 6) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
+        "zip圧縮ファイル名「" & VBA.Left(ActiveWorkbook.Name, 6) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
+        "フォルダを圧縮して提出お願い致します。" & vbCrLf & _
+        vbCrLf & _
+        "もし、現場作業報告書の提出が必要な場合は" & vbCrLf & _
+        "「" & VBA.Left(ActiveWorkbook.Name, 6) & "作業報告書(" & user_name & ").xls」" & "を手動にて編集し" & vbCrLf & _
+        "別名保存にて「" & VBA.Left(ActiveWorkbook.Name, 6) & "現場作業報告書(" & user_name & ").xls」と保存の上" & vbCrLf & _
+        "同じく「" & VBA.Left(ActiveWorkbook.Name, 6) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
+        "zip圧縮ファイル名「" & VBA.Left(ActiveWorkbook.Name, 6) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
+        "フォルダを圧縮して提出お願い致します。" _
+    )
+
+    Application.DisplayAlerts = True
+End Sub
+
+Function ValidationCheck() As Boolean
+'
+' 入力チェック
+'
+'
+    Dim next_row As Integer
+    Dim i As Integer
+    For i = 1 To 100
+        If VBA.InStr(ActiveSheet.Range("B" & i).Value, "勤務情報") <> 0 Then
+            next_row = i
+            Exit For
+        End If
+    Next
+
+    ' 申請者設定チェック
+    If ActiveSheet.Range("F3").Value = "" Or ActiveSheet.Range("I3").Value = "" Then
+        MsgBox ("部署名又は名前が空欄です")
+        ValidationCheck = False
+        Exit Function
+    End If
+    If VBA.Year(ActiveSheet.Range("B3").Value) > VBA.Year(VBA.Now) Or _
+            VBA.Year(ActiveSheet.Range("B3").Value) = VBA.Year(VBA.Now) And VBA.Month(ActiveSheet.Range("B3").Value) > VBA.Month(VBA.Now) Then
+        MsgBox ("未来の月の申請をすることはできません")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.Day(VBA.Date) < 15 And VBA.Month(ActiveSheet.Range("B3").Value) <> VBA.Month(VBA.Now) - 1 Then
+        If MsgBox("報告する月に間違いありませんか？", vbYesNo, "確認") = vbNo Then
+            ValidationCheck = False
+            Exit Function
+        End If
+    ElseIf VBA.Day(VBA.Date) >= 15 And VBA.Month(ActiveSheet.Range("B3").Value) <> VBA.Month(VBA.Now) Then
+        If MsgBox("報告する月に間違いありませんか？", vbYesNo, "確認") = vbNo Then
+            ValidationCheck = False
+            Exit Function
+        End If
+    End If
+
+    ' 定時設定チェック
+    If ActiveSheet.Range("D5").Value = "" Then
+        MsgBox ("勤務１の形態が未選択です")
+        ValidationCheck = False
+        Exit Function
+    End If
+    If ActiveSheet.Range("F5").Value = "" Then
+        MsgBox ("勤務１の開始時間が未入力です")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.IsDate("01/01/01 " & VBA.Format(ActiveSheet.Range("F5").Value, "hh:mm:dd")) = False Then
+        MsgBox ("勤務１の開始時間の入力が時間フォーマットではありません。")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.Minute(VBA.Format(ActiveSheet.Range("F5").Value, "hh:mm:dd")) Mod 15 > 0 Then
+        MsgBox ("勤務１の開始時間の入力を15分刻みにて入力してください。")
+        ValidationCheck = False
+        Exit Function
+    End If
+    If ActiveSheet.Range("F6").Value = "" Then
+        MsgBox ("勤務１の終了時間が未入力です")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.IsDate("01/01/01 " & VBA.Format(ActiveSheet.Range("F6").Value, "hh:mm:dd")) = False Then
+        MsgBox ("勤務１の終了時刻の入力が時間フォーマットではありません。")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.Minute(VBA.Format(ActiveSheet.Range("F6").Value, "hh:mm:dd")) Mod 15 > 0 Then
+        MsgBox ("勤務１の終了時間の入力を15分刻みにて入力してください。")
+        ValidationCheck = False
+        Exit Function
+    End If
+    If ActiveSheet.Range("H5").Value = "" Then
+        MsgBox ("勤務１の休憩時間が未入力です")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.IsDate("01/01/01 " & VBA.Format(ActiveSheet.Range("H5").Value, "h:mm:dd")) = False Then
+        MsgBox ("勤務１の休憩時間の入力が時間フォーマットではありません。")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.Minute(VBA.Format(ActiveSheet.Range("H5").Value, "hh:mm:dd")) Mod 15 > 0 Then
+        MsgBox ("勤務１の休憩時間の入力を15分刻みにて入力してください。")
+        ValidationCheck = False
+        Exit Function
+    End If
+    If ActiveSheet.Range("D7").Value <> "" Or ActiveSheet.Range("F7").Value <> "" Or _
+            ActiveSheet.Range("F8").Value <> "" Or ActiveSheet.Range("H7").Value <> "" Then
+        If ActiveSheet.Range("D7").Value = "" Or ActiveSheet.Range("F7").Value = "" Or _
+                ActiveSheet.Range("F8").Value = "" Or ActiveSheet.Range("H7").Value = "" Then
+            MsgBox ("勤務２の入力にて欠けている箇所があります")
+            ValidationCheck = False
+            Exit Function
+        End If
+    End If
+
+    ActiveSheet.Range("B" & next_row).Offset(2, 0).Select
+
+    ' 勤務情報チェック
+    For i = 0 To 30
+        If ActiveCell.Offset(0, 6).Value <> "" And ActiveCell.Offset(0, 6).Value = 0 Then
+            MsgBox ("稼働が無い場合は開始時間、終了時間、休憩時間は【空欄】でお願いします。" & vbCrLf & "備考のみ稼働が無い理由を明記して下さい。")
+            ValidationCheck = False
+            Exit Function
+        End If
+        If InStr(ActiveCell.Offset(0, 2).Value, "出勤") <> 0 Then
+            If ActiveCell.Offset(0, 3).Value = "" Or ActiveCell.Offset(0, 4).Value = "" Or _
+                    ActiveCell.Offset(0, 5).Value = "" Or ActiveCell.Offset(0, 6).Value = "" Then
+                MsgBox ("開始時間、終了時間、休憩時間、作業時間に空欄があります")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "遅刻") <> 0 Then
+            If ActiveCell.Offset(0, 7).Value = "" Then
+                MsgBox ("遅刻の事由を記入して下さい")
+                ValidationCheck = False
+                Exit Function
+            ElseIf ActiveCell.Offset(0, 3).Value = "" Or ActiveCell.Offset(0, 4).Value = "" Or _
+                    ActiveCell.Offset(0, 5).Value = "" Or ActiveCell.Offset(0, 6).Value = "" Then
+                MsgBox ("開始時間、終了時間、休憩時間、作業時間に空欄があります")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "早退") <> 0 Then
+            If ActiveCell.Offset(0, 7).Value = "" Then
+                MsgBox ("早退の事由を記入して下さい")
+                ValidationCheck = False
+                Exit Function
+            ElseIf ActiveCell.Offset(0, 3).Value = "" Or ActiveCell.Offset(0, 4).Value = "" Or _
+                    ActiveCell.Offset(0, 5).Value = "" Or ActiveCell.Offset(0, 6).Value = "" Then
+                MsgBox ("開始時間、終了時間、休憩時間、作業時間に空欄があります")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "午前休") <> 0 Then
+            If ActiveCell.Offset(0, 7).Value = "" Then
+                MsgBox ("午前休の事由を記入して下さい")
+                ValidationCheck = False
+                Exit Function
+            ElseIf ActiveCell.Offset(0, 3).Value = "" Or ActiveCell.Offset(0, 4).Value = "" Or _
+                    ActiveCell.Offset(0, 5).Value = "" Or ActiveCell.Offset(0, 6).Value = "" Then
+                MsgBox ("開始時間、終了時間、休憩時間、作業時間に空欄があります")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "午後休") <> 0 Then
+            If ActiveCell.Offset(0, 7).Value = "" Then
+                MsgBox ("午後休の事由を記入して下さい")
+                ValidationCheck = False
+                Exit Function
+            ElseIf ActiveCell.Offset(0, 3).Value = "" Or ActiveCell.Offset(0, 4).Value = "" Or _
+                    ActiveCell.Offset(0, 5).Value = "" Or ActiveCell.Offset(0, 6).Value = "" Then
+                MsgBox ("開始時間、終了時間、休憩時間、作業時間に空欄があります")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "全休") <> 0 Then
+            If ActiveCell.Offset(0, 7).Value = "" Then
+                MsgBox ("全休の事由を記入して下さい")
+                ValidationCheck = False
+                Exit Function
+            ElseIf ActiveCell.Offset(0, 3).Value <> "" Or ActiveCell.Offset(0, 4).Value <> "" Or _
+                    ActiveCell.Offset(0, 5).Value <> "" Or ActiveCell.Offset(0, 6).Value <> "" Then
+                MsgBox ("全休の場合は開始時間、終了時間、休憩時間、作業時間を空欄にして下さい")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "代休") <> 0 Then
+            If ActiveCell.Offset(0, 7).Value = "" Then
+                MsgBox ("いつの代休なのか記入して下さい")
+                ValidationCheck = False
+                Exit Function
+            ElseIf ActiveCell.Offset(0, 3).Value <> "" Or ActiveCell.Offset(0, 4).Value <> "" Or _
+                    ActiveCell.Offset(0, 5).Value <> "" Or ActiveCell.Offset(0, 6).Value <> "" Then
+                MsgBox ("代休の場合は開始時間、終了時間、休憩時間、作業時間を空欄にして下さい")
+                ValidationCheck = False
+                Exit Function
+            End If
+            If MsgBox("いつの代休なのか記載しましたか？", vbYesNo, "確認") = vbNo Then
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+' 有給休暇はExcel版の仕様から廃止になった
+'        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "有給休暇") <> 0 Then
+'              If ActiveCell.Offset(0, 3).Value <> "" Or ActiveCell.Offset(0, 4).Value <> "" Or _
+'                    ActiveCell.Offset(0, 5).Value <> "" Or ActiveCell.Offset(0, 6).Value <> "" Then
+'                MsgBox ("有給休暇の場合は開始時間、終了時間、休憩時間、作業時間を空欄にして下さい")
+'                ValidationCheck = False
+'                Exit Function
+'            ElseIf MsgBox("有給休暇日数は報告書記載日数分ある事を確認しましたか？", vbYesNo, "確認") = vbNo Then
+'                Call OpenUrl
+'                ValidationCheck = False
+'                Exit Function
+'            End If
+'        End If
+        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "祝祭日") <> 0 Then
+            If ActiveCell.Offset(0, 3).Value <> "" Or ActiveCell.Offset(0, 4).Value <> "" Or _
+                    ActiveCell.Offset(0, 5).Value <> "" Or ActiveCell.Offset(0, 6).Value <> "" Then
+                MsgBox ("祝祭日に出勤の場合は休日出勤に変更してから入力して下さい")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If ActiveCell.Offset(0, 3).Value <> "" Then
+            If VBA.IsDate("01/01/01 " & VBA.Format(ActiveCell.Offset(0, 3).Value, "hh:mm:dd")) = False Then
+                MsgBox ("開始時間の入力が時間フォーマットではありません。")
+                ValidationCheck = False
+                Exit Function
+            ElseIf VBA.Minute(VBA.Format(ActiveCell.Offset(0, 3).Value, "hh:mm:dd")) Mod 15 > 0 Then
+                MsgBox ("開始時間の入力を15分刻みにて繰り上げ入力をお願いします。")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If ActiveCell.Offset(0, 4).Value <> "" Then
+            If VBA.IsDate("01/01/01 " & VBA.Format(ActiveCell.Offset(0, 4).Value, "hh:mm:dd")) = False Then
+                MsgBox ("終了時間の入力が時間フォーマットではありません。")
+                ValidationCheck = False
+                Exit Function
+            ElseIf VBA.Minute(VBA.Format(ActiveCell.Offset(0, 4).Value, "hh:mm:dd")) Mod 15 > 0 Then
+                MsgBox ("終了時間の入力を15分刻みにて繰り下げ入力をお願いします。")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If ActiveCell.Offset(0, 5).Value <> "" Then
+            If VBA.IsDate("01/01/01 " & VBA.Format(ActiveCell.Offset(0, 5).Value, "h:mm:dd")) = False Then
+                MsgBox ("休憩時間の入力が時間フォーマットではありません。")
+                ValidationCheck = False
+                Exit Function
+            ElseIf VBA.Minute(VBA.Format(ActiveCell.Offset(0, 5).Value, "hh:mm:dd")) Mod 15 > 0 Then
+                MsgBox ("休憩時間の入力を15分刻みにて繰り上げ入力をお願いします。")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If ActiveCell.Offset(0, 6).Value <> "" Then
+            If VBA.IsDate("01/01/01 " & VBA.Format(ActiveCell.Offset(0, 6).Value, "hh:mm:dd")) = False Then
+                MsgBox ("作業時間の入力が時間フォーマットではありません。")
+                ValidationCheck = False
+                Exit Function
+            ElseIf VBA.Minute(VBA.Format(ActiveCell.Offset(0, 6).Value, "hh:mm:dd")) Mod 15 > 0 Then
+                MsgBox ("作業時間の入力を15分刻みにて繰り下げ入力をお願いします。")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        ActiveCell.Offset(1, 0).Activate
+    Next
+    ValidationCheck = True
+End Function
+
+' 有給休暇はExcel版の仕様から廃止になった
+'Sub OpenUrl()
+''
+'' 有給休暇確認のための給与明細URL
+''
+''
+'    With Worksheets.Add
+'        .Range("B1").Select
+'        .Hyperlinks.Add Anchor:=Selection, _
+'            Address:="https://www.atroumu.jp/atroum/users/login.aspx"
+'        .Hyperlinks(1).Follow NewWindow:=True
+'        .Range("B1").ClearContents
+'        Application.DisplayAlerts = False
+'        .Delete
+'        Application.DisplayAlerts = True
+'    End With
+'End Sub

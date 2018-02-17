@@ -1,0 +1,12 @@
+Private Sub Workbook_Open()
+    #If Win64 Then
+        MsgBox ( _
+            "MicrosoftForms" & vbCrLf & _
+            "はこのマシンでは利用できないため、オブジェクトを読み込めませんでした。" & vbCrLf & _
+            vbCrLf & _
+            "↑↑↑↑↑" & vbCrLf & _
+            "こちら表示がされた場合はこのエクセルを終了し" & vbCrLf & _
+            "4.getsumatsu_teishutsu_rule.build01.xlsm を使用してください。" _
+        )
+    #End If
+End Sub
