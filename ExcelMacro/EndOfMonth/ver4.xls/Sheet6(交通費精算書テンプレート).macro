@@ -21,14 +21,14 @@ Sub ChangeSheet()
     sheet.Activate
     sheet.Range("D2").Value = ""
     sheet.Range("I3").Value = "=SUM($D$6+$D$10+$J$27)"
-    sheet.Range("I3").NumberFormatLocal = "¥#,##0;¥-#,##0"
+    sheet.Range("I3").NumberFormatLocal = "\#,##0;\-#,##0"
     sheet.Range("D6").Value = 0
-    sheet.Range("D6").NumberFormatLocal = "¥#,##0;¥-#,##0"
+    sheet.Range("D6").NumberFormatLocal = "\#,##0;\-#,##0"
     sheet.Range("F6").Value = ""
     sheet.Range("F7").Value = "平成　年　月　日〜平成　年　月　日"
     sheet.Range("D8").Value = ""
     sheet.Range("D10").Value = 0
-    sheet.Range("D10").NumberFormatLocal = "¥#,##0;¥-#,##0"
+    sheet.Range("D10").NumberFormatLocal = "\#,##0;\-#,##0"
     sheet.Range("F10").Value = ""
     sheet.Range("F11").Value = "平成　年　月　日〜平成　年　月　日"
     sheet.Range("D12").Value = ""
@@ -47,7 +47,7 @@ Sub ChangeSheet()
             sheet.Range("F" & 18 + i).Value = ""
             sheet.Range("G" & 18 + i).Value = ""
             sheet.Range("H" & 18 + i).Value = ""
-            sheet.Range("H" & 18 + i).NumberFormatLocal = "¥#,##0;¥-#,##0"
+            sheet.Range("H" & 18 + i).NumberFormatLocal = "\#,##0;\-#,##0"
             sheet.Range("I" & 18 + i).Value = "=IF($F$" & (18 + i) & "=""往復"",$H$" & (18 + i) & "*2,$H$" & (18 + i) & ")"
             sheet.Range("J" & 18 + i).Value = ""
         ElseIf sheet.Range("B" & 18 + i + 2).Value <> "注意点" Then
@@ -164,7 +164,7 @@ Sub Publishment()
             Exit For
         End If
     Next
-    Sheet1.Range("A" & last_row).Select
+    Sheet1.Cells(1, 1).Select
     Sheet1.Range(Sheet1.Cells(1, 1).Address, Sheet1.Cells(last_row, 10).Address).Copy
     Sheet2.Activate
     Sheet2.Range("A1").PasteSpecial Paste:=xlPasteAll
@@ -178,15 +178,22 @@ Sub Publishment()
     Dim split_name() As String
     Dim user_name As String
     split_name = VBA.Split(Sheet1.Range("D4").Value, "　")
-    If UBound(split_name) < 1 Then
-        split_name = VBA.Split(Sheet1.Range("D4").Value, " ")
-        If UBound(split_name) = 1 Then
-            user_name = split_name(0) & split_name(1)
-        Else
-            user_name = split_name(0)
-        End If
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
     Else
-        user_name = split_name(0) & split_name(1)
+        user_name = split_name(0)
+    End If
+    split_name = VBA.Split(user_name, " ")
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
+    Else
+        user_name = split_name(0)
     End If
 
     Dim description_flag As Boolean
@@ -207,9 +214,9 @@ Sub Publishment()
     Next
     Sheet2.Range("A1").Select
 
-    Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & VBA.Year(rangetime(0)) & VBA.Month(rangetime(0)) & "交通費精算書(" & user_name & ").xlsx"
-    Load UserForm1
-    UserForm1.Show
+    Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & VBA.Year(rangetime(0)) & VBA.Format(rangetime(0), "mm") & "交通費精算書(" & user_name & ").xls"
+    Load UserForm3
+    UserForm3.Show
 
     Application.DisplayAlerts = True
 End Sub
@@ -240,6 +247,14 @@ Function ValidationCheck() As Boolean
 
     Dim rangetime() As String
     rangetime = GetRange
+    If VBA.Year(rangetime(1)) > VBA.Year(VBA.Now) Or _
+            VBA.Year(rangetime(1)) = VBA.Year(VBA.Now) And VBA.Month(rangetime(1)) > VBA.Month(VBA.Now) Then
+        MsgBox ("未来の月の申請をすることはできません")
+        ActiveSheet.Range("D2").Select
+        ValidationCheck = False
+        Exit Function
+    End If
+
     Dim i As Integer
     For i = 0 To 1
         If ActiveSheet.Range("D" & 6 + i * 4).Value > 0 Then

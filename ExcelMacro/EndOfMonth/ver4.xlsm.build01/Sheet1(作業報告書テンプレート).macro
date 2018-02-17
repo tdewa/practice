@@ -24,7 +24,6 @@ Sub Worksheet_Activate()
     Call ChangeSheet
 End Sub
 
-
 Sub ChangeSheet()
 '
 ' シートのフォーマットを生成
@@ -131,14 +130,13 @@ Sub ChangeSheet()
     Next
 
     Dim answer As Integer
-    If ActiveSheet.Range("K18").Value <> "" Or ActiveSheet.Range("L18").Value <> "" Or ActiveSheet.Range("M18").Value <> "" Or ActiveSheet.Range("N18").Value <> "" Then
+    If ActiveSheet.Range("K21").Value <> "" Or ActiveSheet.Range("L21").Value <> "" Or ActiveSheet.Range("M21").Value <> "" Or ActiveSheet.Range("N21").Value <> "" Then
         answer = MsgBox("２．の枠内の入力データも削除しますか？", vbYesNo + vbQuestion, "削除確認")
         If answer = vbYes Then
-            ActiveSheet.Range("K18:N18").ClearContents
+            ActiveSheet.Range("K21:N21").ClearContents
         End If
     End If
 End Sub
-
 
 Sub RegistData()
 '
@@ -157,13 +155,40 @@ Sub RegistData()
     Dim commuter_status As String
     Dim start_time As String, end_time As String, rest_time As String
     Dim answer As Integer
-    commuter_status = ActiveSheet.Range("K18").Value
-    start_time = ActiveSheet.Range("L18").Value
-    end_time = ActiveSheet.Range("M18").Value
-    rest_time = ActiveSheet.Range("N18").Value
+    commuter_status = ActiveSheet.Range("K21").Value
+    start_time = ActiveSheet.Range("L21").Value
+    end_time = ActiveSheet.Range("M21").Value
+    rest_time = ActiveSheet.Range("N21").Value
     If commuter_status = "" Or start_time = "" Or end_time = "" Or rest_time = "" Then
         answer = MsgBox("未入力箇所がありますが宜しいですか？", vbYesNo + vbQuestion, "登録確認")
         If answer = vbNo Then
+            Exit Sub
+        End If
+    End If
+    If start_time <> "" Then
+        If VBA.IsDate("01/01/01 " & VBA.Format(start_time, "hh:mm:dd")) = False Then
+            MsgBox ("開始時間の入力が時間フォーマットではありません。")
+            Exit Sub
+        ElseIf VBA.Minute(VBA.Format(start_time, "hh:mm:dd")) Mod 15 > 0 Then
+            MsgBox ("開始時間の入力を15分刻みにて入力してください。")
+            Exit Sub
+        End If
+    End If
+    If end_time <> "" Then
+        If VBA.IsDate("01/01/01 " & VBA.Format(end_time, "hh:mm:dd")) = False Then
+            MsgBox ("終了時間の入力が時間フォーマットではありません。")
+            Exit Sub
+        ElseIf VBA.Minute(VBA.Format(end_time, "hh:mm:dd")) Mod 15 > 0 Then
+            MsgBox ("終了時間の入力を15分刻みにて入力してください。")
+            Exit Sub
+        End If
+    End If
+    If rest_time <> "" Then
+        If VBA.IsDate("01/01/01 " & VBA.Format(rest_time, "h:mm:dd")) = False Then
+            MsgBox ("休憩時間の入力が時間フォーマットではありません。")
+            Exit Sub
+        ElseIf VBA.Minute(VBA.Format(rest_time, "hh:mm:dd")) Mod 15 > 0 Then
+            MsgBox ("休憩時間の入力を15分刻みにて入力してください。")
             Exit Sub
         End If
     End If
@@ -247,7 +272,6 @@ Sub RegistData()
     Next
 End Sub
 
-
 Sub Publishment()
 '
 ' シートの印刷フォーマット作成
@@ -281,6 +305,7 @@ Sub Publishment()
         last_row = ActiveCell.Row
     End If
 
+    Sheet1.Cells(1, 1).Select
     Sheet1.Range(Sheet1.Cells(1, 1).Address, Sheet1.Cells(last_row, 9).Address).Copy
     Sheet2.Activate
     Sheet2.Range("A1").PasteSpecial Paste:=xlPasteAll
@@ -290,35 +315,42 @@ Sub Publishment()
     Dim split_name() As String
     Dim user_name As String
     split_name = VBA.Split(Sheet1.Range("I3").Value, "　")
-    If UBound(split_name) < 1 Then
-        split_name = VBA.Split(Sheet1.Range("I3").Value, " ")
-        If UBound(split_name) = 1 Then
-            user_name = split_name(0) & split_name(1)
-        Else
-            user_name = split_name(0)
-        End If
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
     Else
-        user_name = split_name(0) & split_name(1)
+        user_name = split_name(0)
     End If
-    Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "作業報告書.xlsx"
+    split_name = VBA.Split(user_name, " ")
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
+    Else
+        user_name = split_name(0)
+    End If
+    Dim save_filename As String
+    Sheet2.SaveAs Filename:=ThisWorkbook.Path & "\" & VBA.Year(Sheet1.Range("B3").Value) & VBA.Format(Sheet1.Range("B3").Value, "mm") & "作業報告書(" & user_name & ").xlsx"
     MsgBox ( _
-        ThisWorkbook.Path & "\" & Sheet2.Name & "(" & user_name & ").xlsx" & vbCrLf & _
+        ThisWorkbook.Path & "\" & ActiveWorkbook.Name & vbCrLf & _
         "上記にファイルを保存しました。" & vbCrLf & _
-        "「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "交通費精算書(" & user_name & ").xlsx」と合わせて「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
-        "zip圧縮ファイル名「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
+        "「" & VBA.Left(ActiveWorkbook.Name, 6) & "交通費精算書(" & user_name & ").xlsx」と合わせて「" & VBA.Left(ActiveWorkbook.Name, 6) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
+        "zip圧縮ファイル名「" & VBA.Left(ActiveWorkbook.Name, 6) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
         "フォルダを圧縮して提出お願い致します。" & vbCrLf & _
         vbCrLf & _
         "もし、現場作業報告書の提出が必要な場合は" & vbCrLf & _
-        "「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "作業報告書(" & user_name & ").xlsx」" & "を手動にて編集し" & vbCrLf & _
-        "別名保存にて「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "現場作業報告書(" & user_name & ").xlsx」と保存の上" & vbCrLf & _
-        "同じく「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
-        "zip圧縮ファイル名「" & VBA.Year(Sheet2.Range("B3").Value) & VBA.Month(Sheet2.Range("B3").Value) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
+        "「" & VBA.Left(ActiveWorkbook.Name, 6) & "作業報告書(" & user_name & ").xlsx」" & "を手動にて編集し" & vbCrLf & _
+        "別名保存にて「" & VBA.Left(ActiveWorkbook.Name, 6) & "現場作業報告書(" & user_name & ").xlsx」と保存の上" & vbCrLf & _
+        "同じく「" & VBA.Left(ActiveWorkbook.Name, 6) & "月末(" & user_name & ")」フォルダに格納し" & vbCrLf & _
+        "zip圧縮ファイル名「" & VBA.Left(ActiveWorkbook.Name, 6) & "月末(" & user_name & ").zip」でEの5のパスワードにて" & vbCrLf & _
         "フォルダを圧縮して提出お願い致します。" _
     )
 
     Application.DisplayAlerts = True
 End Sub
-
 
 Function ValidationCheck() As Boolean
 '
@@ -334,25 +366,30 @@ Function ValidationCheck() As Boolean
         End If
     Next
 
-    ' 提示設定チェック
+    ' 申請者設定チェック
     If ActiveSheet.Range("F3").Value = "" Or ActiveSheet.Range("I3").Value = "" Then
         MsgBox ("部署名又は名前が空欄です")
         ValidationCheck = False
         Exit Function
     End If
-
-    If VBA.Day(VBA.Date) < 15 And VBA.Month(ActiveSheet.Range("B3").Value) <> VBA.Month(Now()) - 1 Then
-        If MsgBox("報告する月に間違いありませんか？", vbYesNo, "確認") = False Then
+    If VBA.Year(ActiveSheet.Range("B3").Value) > VBA.Year(VBA.Now) Or _
+            VBA.Year(ActiveSheet.Range("B3").Value) = VBA.Year(VBA.Now) And VBA.Month(ActiveSheet.Range("B3").Value) > VBA.Month(VBA.Now) Then
+        MsgBox ("未来の月の申請をすることはできません")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.Day(VBA.Date) < 15 And VBA.Month(ActiveSheet.Range("B3").Value) <> VBA.Month(VBA.Now) - 1 Then
+        If MsgBox("報告する月に間違いありませんか？", vbYesNo, "確認") = vbNo Then
             ValidationCheck = False
             Exit Function
         End If
-    ElseIf VBA.Month(ActiveSheet.Range("B3").Value) <> VBA.Month(Now()) Then
-        If MsgBox("報告する月に間違いありませんか？", vbYesNo, "確認") = False Then
+    ElseIf VBA.Day(VBA.Date) >= 15 And VBA.Month(ActiveSheet.Range("B3").Value) <> VBA.Month(VBA.Now) Then
+        If MsgBox("報告する月に間違いありませんか？", vbYesNo, "確認") = vbNo Then
             ValidationCheck = False
             Exit Function
         End If
     End If
 
+    ' 定時設定チェック
     If ActiveSheet.Range("D5").Value = "" Then
         MsgBox ("勤務１の形態が未選択です")
         ValidationCheck = False
@@ -362,14 +399,38 @@ Function ValidationCheck() As Boolean
         MsgBox ("勤務１の開始時間が未入力です")
         ValidationCheck = False
         Exit Function
+    ElseIf VBA.IsDate("01/01/01 " & VBA.Format(ActiveSheet.Range("F5").Value, "hh:mm:dd")) = False Then
+        MsgBox ("勤務１の開始時間の入力が時間フォーマットではありません。")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.Minute(VBA.Format(ActiveSheet.Range("F5").Value, "hh:mm:dd")) Mod 15 > 0 Then
+        MsgBox ("勤務１の開始時間の入力を15分刻みにて入力してください。")
+        ValidationCheck = False
+        Exit Function
     End If
     If ActiveSheet.Range("F6").Value = "" Then
         MsgBox ("勤務１の終了時間が未入力です")
         ValidationCheck = False
         Exit Function
+    ElseIf VBA.IsDate("01/01/01 " & VBA.Format(ActiveSheet.Range("F6").Value, "hh:mm:dd")) = False Then
+        MsgBox ("勤務１の終了時刻の入力が時間フォーマットではありません。")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.Minute(VBA.Format(ActiveSheet.Range("F6").Value, "hh:mm:dd")) Mod 15 > 0 Then
+        MsgBox ("勤務１の終了時間の入力を15分刻みにて入力してください。")
+        ValidationCheck = False
+        Exit Function
     End If
     If ActiveSheet.Range("H5").Value = "" Then
         MsgBox ("勤務１の休憩時間が未入力です")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.IsDate("01/01/01 " & VBA.Format(ActiveSheet.Range("H5").Value, "h:mm:dd")) = False Then
+        MsgBox ("勤務１の休憩時間の入力が時間フォーマットではありません。")
+        ValidationCheck = False
+        Exit Function
+    ElseIf VBA.Minute(VBA.Format(ActiveSheet.Range("H5").Value, "hh:mm:dd")) Mod 15 > 0 Then
+        MsgBox ("勤務１の休憩時間の入力を15分刻みにて入力してください。")
         ValidationCheck = False
         Exit Function
     End If
@@ -478,7 +539,7 @@ Function ValidationCheck() As Boolean
         End If
 ' 有給休暇はExcel版の仕様から廃止になった
 '        If VBA.InStr(ActiveCell.Offset(0, 2).Value, "有給休暇") <> 0 Then
-'            If ActiveCell.Offset(0, 3).Value <> "" Or ActiveCell.Offset(0, 4).Value <> "" Or _
+'              If ActiveCell.Offset(0, 3).Value <> "" Or ActiveCell.Offset(0, 4).Value <> "" Or _
 '                    ActiveCell.Offset(0, 5).Value <> "" Or ActiveCell.Offset(0, 6).Value <> "" Then
 '                MsgBox ("有給休暇の場合は開始時間、終了時間、休憩時間、作業時間を空欄にして下さい")
 '                ValidationCheck = False
@@ -497,11 +558,54 @@ Function ValidationCheck() As Boolean
                 Exit Function
             End If
         End If
+        If ActiveCell.Offset(0, 3).Value <> "" Then
+            If VBA.IsDate("01/01/01 " & VBA.Format(ActiveCell.Offset(0, 3).Value, "hh:mm:dd")) = False Then
+                MsgBox ("開始時間の入力が時間フォーマットではありません。")
+                ValidationCheck = False
+                Exit Function
+            ElseIf VBA.Minute(VBA.Format(ActiveCell.Offset(0, 3).Value, "hh:mm:dd")) Mod 15 > 0 Then
+                MsgBox ("開始時間の入力を15分刻みにて繰り上げ入力をお願いします。")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If ActiveCell.Offset(0, 4).Value <> "" Then
+            If VBA.IsDate("01/01/01 " & VBA.Format(ActiveCell.Offset(0, 4).Value, "hh:mm:dd")) = False Then
+                MsgBox ("終了時間の入力が時間フォーマットではありません。")
+                ValidationCheck = False
+                Exit Function
+            ElseIf VBA.Minute(VBA.Format(ActiveCell.Offset(0, 4).Value, "hh:mm:dd")) Mod 15 > 0 Then
+                MsgBox ("終了時間の入力を15分刻みにて繰り下げ入力をお願いします。")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If ActiveCell.Offset(0, 5).Value <> "" Then
+            If VBA.IsDate("01/01/01 " & VBA.Format(ActiveCell.Offset(0, 5).Value, "h:mm:dd")) = False Then
+                MsgBox ("休憩時間の入力が時間フォーマットではありません。")
+                ValidationCheck = False
+                Exit Function
+            ElseIf VBA.Minute(VBA.Format(ActiveCell.Offset(0, 5).Value, "hh:mm:dd")) Mod 15 > 0 Then
+                MsgBox ("休憩時間の入力を15分刻みにて繰り上げ入力をお願いします。")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
+        If ActiveCell.Offset(0, 6).Value <> "" Then
+            If VBA.IsDate("01/01/01 " & VBA.Format(ActiveCell.Offset(0, 6).Value, "hh:mm:dd")) = False Then
+                MsgBox ("作業時間の入力が時間フォーマットではありません。")
+                ValidationCheck = False
+                Exit Function
+            ElseIf VBA.Minute(VBA.Format(ActiveCell.Offset(0, 6).Value, "hh:mm:dd")) Mod 15 > 0 Then
+                MsgBox ("作業時間の入力を15分刻みにて繰り下げ入力をお願いします。")
+                ValidationCheck = False
+                Exit Function
+            End If
+        End If
         ActiveCell.Offset(1, 0).Activate
     Next
     ValidationCheck = True
 End Function
-
 
 ' 有給休暇はExcel版の仕様から廃止になった
 'Sub OpenUrl()

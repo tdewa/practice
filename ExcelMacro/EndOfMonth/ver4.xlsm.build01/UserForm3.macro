@@ -1,0 +1,10 @@
+Private Sub CommandButton1_Click()
+    Load UserForm1
+    UserForm1.Show
+    ' 説明フレーム「注意事項」は閉じる
+    Unload UserForm3
+End Sub
+
+Private Sub Label2_Click()
+    ThisWorkbook.FollowHyperlink Address:="https://transit.yahoo.co.jp"
+End Sub

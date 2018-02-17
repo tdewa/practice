@@ -116,20 +116,27 @@ Private Sub CommandButton1_Click()
     Dim split_name() As String
     Dim user_name As String
     split_name = VBA.Split(wb.sheets(1).Range("D4").Value, "　")
-    If UBound(split_name) < 1 Then
-        split_name = Split(wb.sheets(1).Range("D4").Value, " ")
-        If UBound(split_name) = 1 Then
-            user_name = split_name(0) & split_name(1)
-        Else
-            user_name = split_name(0)
-        End If
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
     Else
-        user_name = split_name(0) & split_name(1)
+        user_name = split_name(0)
+    End If
+    split_name = VBA.Split(user_name, " ")
+    user_name = ""
+    If UBound(split_name) > 0 Then
+        For i = 0 To UBound(split_name)
+            user_name = user_name & split_name(i)
+        Next
+    Else
+        user_name = split_name(0)
     End If
 
-    ' 上書き保存
     Application.DisplayAlerts = False
 
+    ' 上書き保存
     wb.Save
     MsgBox ( _
         "ファイルの貼り付け完了しました。また" & vbCrLf & _

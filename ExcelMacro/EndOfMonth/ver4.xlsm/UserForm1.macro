@@ -1,0 +1,11 @@
+Private Sub CommandButton1_Click()
+'
+' 写真を添付する用のドラッグ＆ドロップフレーム追加
+'
+'
+    ' フレーム「添付ファイルのドラッグ＆ドロップ」を表示
+    Load UserForm2
+    UserForm2.Show
+    ' 説明フレーム「注意事項」は閉じる
+    Unload UserForm1
+End Sub
